@@ -1,0 +1,4 @@
+#!/bin/sh
+
+vsim work.iicmb_m_wb_tb
+
