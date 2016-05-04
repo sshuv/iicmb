@@ -73,13 +73,13 @@ entity iicmb_m_av is
     clk           : in    std_logic;                            -- Clock
     s_rst         : in    std_logic;                            -- Synchronous reset (active high)
     -------------
-    waitrequest   :   out std_logic;
-    readdata      :   out std_logic_vector(31 downto 0);
-    readdatavalid :   out std_logic;
-    writedata     : in    std_logic_vector(31 downto 0);
-    write         : in    std_logic;
-    read          : in    std_logic;
-    byteenable    : in    std_logic_vector( 3 downto 0);
+    waitrequest   :   out std_logic;                            -- Wait request
+    readdata      :   out std_logic_vector(31 downto 0);        -- Data from slave to master
+    readdatavalid :   out std_logic;                            -- Data validity indication
+    writedata     : in    std_logic_vector(31 downto 0);        -- Data from master to slave
+    write         : in    std_logic;                            -- Asserted to indicate write transfer
+    read          : in    std_logic;                            -- Asserted to indicate read transfer
+    byteenable    : in    std_logic_vector( 3 downto 0);        -- Enables specific byte lane(s)
     ------------------------------------
     ------------------------------------
     -- Interrupt request:
