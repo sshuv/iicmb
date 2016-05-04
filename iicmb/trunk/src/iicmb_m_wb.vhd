@@ -73,11 +73,11 @@ entity iicmb_m_wb is
     clk_i         : in    std_logic;                            -- Clock
     rst_i         : in    std_logic;                            -- Synchronous reset (active high)
     -------------
-    cyc_i         : in    std_logic;                            -- 
-    stb_i         : in    std_logic;                            -- 
-    ack_o         :   out std_logic;                            -- 
+    cyc_i         : in    std_logic;                            -- Valid bus cycle indication
+    stb_i         : in    std_logic;                            -- Slave selection
+    ack_o         :   out std_logic;                            -- Acknowledge output
     adr_i         : in    std_logic_vector(1 downto 0);         -- Low bits of Wishbone address
-    we_i          : in    std_logic;                            -- 
+    we_i          : in    std_logic;                            -- Write enable
     dat_i         : in    std_logic_vector(7 downto 0);         -- Data input
     dat_o         :   out std_logic_vector(7 downto 0);         -- Data output
     ------------------------------------

@@ -46,25 +46,25 @@ entity avalon_mm is
   port
   (
     ------------------------------------
-    clk           : in    std_logic;                                -- Clock input
-    s_rst         : in    std_logic;                                -- Synchronous reset (active high)
+    clk           : in    std_logic;                            -- Clock input
+    s_rst         : in    std_logic;                            -- Synchronous reset (active high)
     ------------------------------------
     ------------------------------------
     -- Avalon-MM slave interface:
-    waitrequest   :   out std_logic;
-    readdata      :   out std_logic_vector(31 downto 0);
-    readdatavalid :   out std_logic;
-    writedata     : in    std_logic_vector(31 downto 0);
-    write         : in    std_logic;
-    read          : in    std_logic;
-    byteenable    : in    std_logic_vector( 3 downto 0);
+    waitrequest   :   out std_logic;                            -- Wait request
+    readdata      :   out std_logic_vector(31 downto 0);        -- Data from slave to master
+    readdatavalid :   out std_logic;                            -- Data validity indication
+    writedata     : in    std_logic_vector(31 downto 0);        -- Data from master to slave
+    write         : in    std_logic;                            -- Asserted to indicate write transfer
+    read          : in    std_logic;                            -- Asserted to indicate read transfer
+    byteenable    : in    std_logic_vector( 3 downto 0);        -- Enables specific byte lane(s)
     ------------------------------------
     ------------------------------------
     -- Regblock interface:
-    wr            :   out std_logic_vector( 3 downto 0);            -- Write (active high)
-    rd            :   out std_logic_vector( 3 downto 0);            -- Read (active high)
-    idata         :   out std_logic_vector(31 downto 0);            -- Data from System Bus
-    odata         : in    std_logic_vector(31 downto 0)             -- Data to System Bus
+    wr            :   out std_logic_vector( 3 downto 0);        -- Write (active high)
+    rd            :   out std_logic_vector( 3 downto 0);        -- Read (active high)
+    idata         :   out std_logic_vector(31 downto 0);        -- Data from System Bus
+    odata         : in    std_logic_vector(31 downto 0)         -- Data for System Bus
     ------------------------------------
   );
 end entity avalon_mm;

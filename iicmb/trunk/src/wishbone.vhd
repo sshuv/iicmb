@@ -46,25 +46,25 @@ entity wishbone is
   port
   (
     ------------------------------------
-    clk_i       : in    std_logic;                                -- Clock input
-    rst_i       : in    std_logic;                                -- Synchronous reset (active high)
+    clk_i       : in    std_logic;                              -- Clock input
+    rst_i       : in    std_logic;                              -- Synchronous reset (active high)
     ------------------------------------
     ------------------------------------
     -- Wishbone slave interface:
-    cyc_i       : in    std_logic;                                -- 
-    stb_i       : in    std_logic;                                -- 
-    ack_o       :   out std_logic;                                -- 
-    adr_i       : in    std_logic_vector( 1 downto 0);            -- Low bits of Wishbone address
-    we_i        : in    std_logic;                                -- 
-    dat_i       : in    std_logic_vector( 7 downto 0);            -- Data input
-    dat_o       :   out std_logic_vector( 7 downto 0);            -- Data output
+    cyc_i       : in    std_logic;                              -- Valid bus cycle indication
+    stb_i       : in    std_logic;                              -- Slave selection
+    ack_o       :   out std_logic;                              -- Acknowledge output
+    adr_i       : in    std_logic_vector( 1 downto 0);          -- Low bits of Wishbone address
+    we_i        : in    std_logic;                              -- Write enable
+    dat_i       : in    std_logic_vector( 7 downto 0);          -- Data input
+    dat_o       :   out std_logic_vector( 7 downto 0);          -- Data output
     ------------------------------------
     ------------------------------------
     -- Regblock interface:
-    wr          :   out std_logic_vector( 3 downto 0);            -- Write (active high)
-    rd          :   out std_logic_vector( 3 downto 0);            -- Read (active high)
-    idata       :   out std_logic_vector(31 downto 0);            -- Data from System Bus
-    odata       : in    std_logic_vector(31 downto 0)             -- Data to System Bus
+    wr          :   out std_logic_vector( 3 downto 0);          -- Write (active high)
+    rd          :   out std_logic_vector( 3 downto 0);          -- Read (active high)
+    idata       :   out std_logic_vector(31 downto 0);          -- Data from System Bus
+    odata       : in    std_logic_vector(31 downto 0)           -- Data to System Bus
     ------------------------------------
   );
 end entity wishbone;
