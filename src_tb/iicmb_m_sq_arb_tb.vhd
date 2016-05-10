@@ -122,7 +122,7 @@ architecture beh of iicmb_m_sq_arb_tb is
   component i2c_slave_model is
     generic
     (
-      i2c_adr : std_logic_vector(6 downto 0)
+      I2C_ADR : integer
     );
     port
     (
@@ -132,31 +132,34 @@ architecture beh of iicmb_m_sq_arb_tb is
   end component i2c_slave_model;
   ------------------------------------------------------------------------------
 
-  signal   clk         : std_logic := '0';
-  signal   s_rst       : std_logic := '1';
+  constant c_slave_addr : std_logic_vector(6 downto 0) := "0100001";
+  constant c_i2c_adr    : integer                      := to_integer(unsigned(c_slave_addr));
 
-  signal   cs_start_0  : std_logic := '0';
-  signal   cs_busy_0   : std_logic;
-  signal   cs_status_0 : std_logic_vector(2 downto 0);
+  signal   clk          : std_logic := '0';
+  signal   s_rst        : std_logic := '1';
 
-  signal   cs_start_1  : std_logic := '0';
-  signal   cs_busy_1   : std_logic;
-  signal   cs_status_1 : std_logic_vector(2 downto 0);
+  signal   cs_start_0   : std_logic := '0';
+  signal   cs_busy_0    : std_logic;
+  signal   cs_status_0  : std_logic_vector(2 downto 0);
 
-  signal   scl_o_0     : std_logic_vector(0 to 0) := (others => '1');
-  signal   sda_o_0     : std_logic_vector(0 to 0) := (others => '1');
-  signal   scl_o_1     : std_logic_vector(0 to 0) := (others => '1');
-  signal   sda_o_1     : std_logic_vector(0 to 0) := (others => '1');
-  signal   scl         : std_logic_vector(0 to 0) := (others => 'H');
-  signal   sda         : std_logic_vector(0 to 0) := (others => 'H');
+  signal   cs_start_1   : std_logic := '0';
+  signal   cs_busy_1    : std_logic;
+  signal   cs_status_1  : std_logic_vector(2 downto 0);
+
+  signal   scl_o_0      : std_logic_vector(0 to 0) := (others => '1');
+  signal   sda_o_0      : std_logic_vector(0 to 0) := (others => '1');
+  signal   scl_o_1      : std_logic_vector(0 to 0) := (others => '1');
+  signal   sda_o_1      : std_logic_vector(0 to 0) := (others => '1');
+  signal   scl          : std_logic_vector(0 to 0) := (others => 'H');
+  signal   sda          : std_logic_vector(0 to 0) := (others => 'H');
 
   type real_vector is array (natural range <>) of real;
-  signal   scl_real    : real_vector(0 to 0);
-  signal   sda_real    : real_vector(0 to 0);
-  signal   scl_quant   : bit_vector(0 to 0);
-  signal   sda_quant   : bit_vector(0 to 0);
-  signal   scl_nquant  : bit_vector(0 to 0) := (others => '1');
-  signal   sda_nquant  : bit_vector(0 to 0) := (others => '1');
+  signal   scl_real     : real_vector(0 to 0);
+  signal   sda_real     : real_vector(0 to 0);
+  signal   scl_quant    : bit_vector(0 to 0);
+  signal   sda_quant    : bit_vector(0 to 0);
+  signal   scl_nquant   : bit_vector(0 to 0) := (others => '1');
+  signal   sda_nquant   : bit_vector(0 to 0) := (others => '1');
 
 begin
 
@@ -200,10 +203,10 @@ begin
       g_f_scl_0   => c_f_scl_0,
       g_cmd       =>
         (
-          scmd_wait(1),                             -- Wait for 1 ms
-          scmd_set_bus(0),                          -- Select bus #0
-          scmd_write_byte("0100001", x"03", x"4A"), -- Write byte
-          scmd_write_byte("0100001", x"05", x"27")  -- Write byte
+          scmd_wait(1),                                -- Wait for 1 ms
+          scmd_set_bus(0),                             -- Select bus #0
+          scmd_write_byte(c_slave_addr, x"03", x"4A"), -- Write byte
+          scmd_write_byte(c_slave_addr, x"05", x"27")  -- Write byte
         )
     )
     port map
@@ -229,10 +232,10 @@ begin
       g_f_scl_0   => c_f_scl_1,
       g_cmd       =>
         (
-          scmd_wait(1),                             -- Wait for 1 ms
-          scmd_set_bus(0),                          -- Select bus #0
-          scmd_write_byte("0100001", x"03", x"4A"), -- Write byte
-          scmd_write_byte("0100001", x"05", x"67")  -- Write byte
+          scmd_wait(1),                                -- Wait for 1 ms
+          scmd_set_bus(0),                             -- Select bus #0
+          scmd_write_byte(c_slave_addr, x"03", x"4A"), -- Write byte
+          scmd_write_byte(c_slave_addr, x"05", x"67")  -- Write byte
         )
     )
     port map
@@ -294,7 +297,7 @@ begin
   i2c_slave_model_inst0 : i2c_slave_model
     generic map
     (
-      i2c_adr => "0100001"
+      I2C_ADR => c_i2c_adr
     )
     port map
     (

@@ -129,7 +129,7 @@ architecture beh of iicmb_m_wb_tb is
   component i2c_slave_model is
     generic
     (
-      i2c_adr : std_logic_vector(6 downto 0)
+      I2C_ADR : integer
     );
     port
     (
@@ -431,7 +431,7 @@ begin
     i2c_slave_model_inst0 : i2c_slave_model
       generic map
       (
-        i2c_adr => get_slave_addr(i)
+        I2C_ADR => to_integer(unsigned(get_slave_addr(i)))
       )
       port map
       (
