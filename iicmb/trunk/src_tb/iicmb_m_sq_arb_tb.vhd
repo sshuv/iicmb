@@ -7,6 +7,8 @@
 --             synchronization.                                                |
 --    Version:                                                                 |
 --             1.0,   April 29, 2016                                           |
+--             1.1,   May   10, 2016 Changed i2c_slave_model instance          |
+--                                   parameter interface                       |
 --                                                                             |
 --    Author:  Sergey Shuvalkin, (sshuv2@opencores.org)                        |
 --                                                                             |
