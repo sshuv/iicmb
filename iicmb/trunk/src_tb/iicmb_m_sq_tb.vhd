@@ -125,7 +125,7 @@ architecture beh of iicmb_m_sq_tb is
   component i2c_slave_model is
     generic
     (
-      i2c_adr : std_logic_vector(6 downto 0)
+      I2C_ADR : integer
     );
     port
     (
@@ -136,11 +136,11 @@ architecture beh of iicmb_m_sq_tb is
   ------------------------------------------------------------------------------
 
   ------------------------------------------------------------------------------
-  function get_slave_addr(n : natural) return std_logic_vector is
-    variable ret : std_logic_vector(6 downto 0);
+  function get_slave_addr(n : natural) return natural is
+    variable ret : unsigned(6 downto 0);
   begin
-    ret := "010" & std_logic_vector(to_unsigned(n, 4));
-    return ret;
+    ret := "010" & to_unsigned(n, 4);
+    return to_integer(ret);
   end function get_slave_addr;
   ------------------------------------------------------------------------------
 
@@ -264,7 +264,7 @@ begin
     i2c_slave_model_inst0 : i2c_slave_model
       generic map
       (
-        i2c_adr => get_slave_addr(i)
+        I2C_ADR => get_slave_addr(i)
       )
       port map
       (
