@@ -129,7 +129,7 @@ architecture rtl of mbyte is
   signal   sbuf            : std_logic_vector(7 downto 0)       := (others => '0');
   signal   ack             : std_logic                          := '0';
   signal   cycle_cnt       : integer range 0 to c_cycle_cnt_max := 0;
-  signal   us_cnt          : unsigned( 7 downto 0)              := to_unsigned(0, 8);
+  signal   ms_cnt          : unsigned( 7 downto 0)              := to_unsigned(0, 8);
 
 begin
 
@@ -190,7 +190,7 @@ begin
         bus_id    <= 0;
         captured  <= '0';
         cycle_cnt <= 0;
-        us_cnt    <= to_unsigned(0, 8);
+        ms_cnt    <= to_unsigned(0, 8);
       else
         -- Default:
         mbc_wr    <= '0';
@@ -219,7 +219,7 @@ begin
                   -- Wait for specified period:
                   state     <= s_wait;
                   cycle_cnt <= 0;
-                  us_cnt    <= unsigned(mcmd_data);
+                  ms_cnt    <= unsigned(mcmd_data);
                 when others =>
                   -- Other commands are rejected in 'Idle' state
                   state     <= s_idle;
@@ -233,7 +233,7 @@ begin
           -- 'Wait' state ----------------------------------
           when s_wait =>
             captured  <= '0';
-            if (us_cnt = 0) then
+            if (ms_cnt = 0) then
               state     <= s_idle;
               byte_response(mrsp_done);
             else
@@ -241,7 +241,7 @@ begin
                 cycle_cnt <= cycle_cnt + c_cycle_cnt_inc;
               else
                 cycle_cnt <= cycle_cnt - c_cycle_cnt_thr;
-                us_cnt    <= us_cnt - 1;
+                ms_cnt    <= ms_cnt - 1;
               end if;
             end if;
           -- 'Wait' state ----------------------------------
