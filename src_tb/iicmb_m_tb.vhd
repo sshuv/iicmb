@@ -40,9 +40,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-library iicmb;
-use iicmb.iicmb_pkg.all;
-
+library work;
+use work.iicmb_pkg.all;
 use work.test.all;
 
 
