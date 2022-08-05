@@ -60,7 +60,7 @@ jobs:
         run: |
           ghdl --version
           mkdir -p ./sim/work
-      - name: iicmb_m_wb
+      - name: iicmb
         run: |
           # Behavior
           ghdl -a ${GHDL_OPTS} ./src/iicmb_pkg.vhd
@@ -80,5 +80,5 @@ jobs:
           ghdl -a ${GHDL_OPTS} ./src_tb/wire_mdl.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/iicmb_m_tb.vhd
           # Run
-          ghdl -r "${GHDL_OPTS} --stop-time=1ms" iicmb_m_tb
+          ghdl -r ${GHDL_OPTS} iicmb_m_tb --stop-time=1ms
 
