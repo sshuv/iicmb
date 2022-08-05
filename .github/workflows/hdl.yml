@@ -80,5 +80,5 @@ jobs:
           ghdl -a ${GHDL_OPTS} ./src_tb/wire_mdl.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/iicmb_m_tb.vhd
           # Run
-          ghdl -r ${GHDL_OPTS} --stop-time=1ms iicmb_m_tb
+          ghdl -r "${GHDL_OPTS} --stop-time=1ms" iicmb_m_tb
 
