@@ -76,6 +76,7 @@ jobs:
           ghdl -a ${GHDL_OPTS} ./src/wishbone.vhd
           ghdl -a ${GHDL_OPTS} ./src/iicmb_m_wb.vhd
           # Testbench
+          ghdl -a ${GHDL_OPTS} ./src_tb/test.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/wire_mdl.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/iicmb_m_tb.vhd
           # Run
