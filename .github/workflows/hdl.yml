@@ -83,4 +83,4 @@ jobs:
           # Elaborate
           ghdl -e --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb
           # Run
-          #ghdl -r --workdir=./sim/work -P./sim/iicmb iicmb_m_tb --syn-binding --stop-time=1ms
+          #ghdl -r iicmb_m_tb --stop-time=1ms
