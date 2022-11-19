@@ -80,9 +80,6 @@ jobs:
           ghdl -a ${GHDL_OPTS} --workdir=./sim/work ./src_tb/test.vhd
           ghdl -a ${GHDL_OPTS} --workdir=./sim/work ./src_tb/wire_mdl.vhd
           ghdl -a ${GHDL_OPTS} --workdir=./sim/work -P./sim/iicmb ./src_tb/iicmb_m_tb.vhd
-          # Elaborate
-          #ghdl -e ${GHDL_OPTS} --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb
           # Run
-          #ghdl -r ${GHDL_OPTS} iicmb_m_tb --workdir=./sim/work --stop-time=1ms
           ghdl -r ${GHDL_OPTS} --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb --stop-time=1ms
           
