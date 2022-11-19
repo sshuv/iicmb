@@ -63,23 +63,23 @@ jobs:
       - name: iicmb
         run: |
           # Behavior
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_pkg.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_int_pkg.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/bus_state.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/filter.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/conditioner.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/conditioner_mux.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/mbit.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/mbyte.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_m.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/regblock.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/wishbone.vhd
-          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_m_wb.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/iicmb_pkg.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/iicmb_int_pkg.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/bus_state.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/filter.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/conditioner.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/conditioner_mux.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/mbit.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/mbyte.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/iicmb_m.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/regblock.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/wishbone.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb --workdir=./sim/work ./src/iicmb_m_wb.vhd
           # Testbench
-          ghdl -a ${GHDL_OPTS} -P./sim/iicmb ./src_tb/test.vhd
-          ghdl -a ${GHDL_OPTS} -P./sim/iicmb ./src_tb/wire_mdl.vhd
-          ghdl -a ${GHDL_OPTS} -P./sim/iicmb ./src_tb/iicmb_m_tb.vhd
+          ghdl -a ${GHDL_OPTS} --work=work --workdir=./sim/work ./src_tb/test.vhd
+          ghdl -a ${GHDL_OPTS} --work=work --workdir=./sim/work ./src_tb/wire_mdl.vhd
+          ghdl -a ${GHDL_OPTS} --work=work --workdir=./sim/work ./src_tb/iicmb_m_tb.vhd
           # Elaborate
-          ghdl -e --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb
+          ghdl -e --work=work --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb
           # Run
           ghdl -r iicmb_m_tb --stop-time=1ms
