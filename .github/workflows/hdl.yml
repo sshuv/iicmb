@@ -63,18 +63,18 @@ jobs:
       - name: iicmb
         run: |
           # Behavior
-          ghdl -a ${GHDL_OPTS} ./src/iicmb_pkg.vhd
-          ghdl -a ${GHDL_OPTS} ./src/iicmb_int_pkg.vhd
-          ghdl -a ${GHDL_OPTS} ./src/bus_state.vhd
-          ghdl -a ${GHDL_OPTS} ./src/filter.vhd
-          ghdl -a ${GHDL_OPTS} ./src/conditioner.vhd
-          ghdl -a ${GHDL_OPTS} ./src/conditioner_mux.vhd
-          ghdl -a ${GHDL_OPTS} ./src/mbit.vhd
-          ghdl -a ${GHDL_OPTS} ./src/mbyte.vhd
-          ghdl -a ${GHDL_OPTS} ./src/iicmb_m.vhd
-          ghdl -a ${GHDL_OPTS} ./src/regblock.vhd
-          ghdl -a ${GHDL_OPTS} ./src/wishbone.vhd
-          ghdl -a ${GHDL_OPTS} ./src/iicmb_m_wb.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_pkg.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_int_pkg.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/bus_state.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/filter.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/conditioner.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/conditioner_mux.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/mbit.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/mbyte.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_m.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/regblock.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/wishbone.vhd
+          ghdl -a ${GHDL_OPTS} --work=iicmb ./src/iicmb_m_wb.vhd
           # Testbench
           ghdl -a ${GHDL_OPTS} ./src_tb/test.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/wire_mdl.vhd
