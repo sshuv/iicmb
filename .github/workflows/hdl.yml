@@ -78,7 +78,7 @@ jobs:
           # Testbench
           ghdl -a ${GHDL_OPTS} ./src_tb/test.vhd
           ghdl -a ${GHDL_OPTS} ./src_tb/wire_mdl.vhd
-          ghdl -a ${GHDL_OPTS} -P ./sim/iicmb ./src_tb/iicmb_m_tb.vhd
+          ghdl -a ${GHDL_OPTS} -P./sim/iicmb ./src_tb/iicmb_m_tb.vhd
           # Elaborate
           #ghdl -e --work=work --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb
           # Run
