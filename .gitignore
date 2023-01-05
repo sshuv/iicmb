@@ -1,0 +1,10 @@
+# GCC
+#
+*.o
+*.bin
+*.S
+*.hex
+*.elf
+*.asm
+*.c.o
+#
