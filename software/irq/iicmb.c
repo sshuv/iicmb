@@ -151,7 +151,7 @@ int iicm_init(t_iicm *this)
     this->uint16WrByteIs = 0;           // Number of Bytes processed (Sent/Receive)
     this->uint8PtrWrBuf = NULL;         // Write Buffer Pointer
     this->uint8PtrRdBuf = NULL;         // Read Buffer Pointer
-    this->regPtr = NULL;                // IICMB handle not mapped
+    //this->regPtr = NULL;                // IICMB handle not mapped
 
     /* init core */
     ret |= iicm_disable();      // core disable

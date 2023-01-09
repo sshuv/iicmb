@@ -192,7 +192,7 @@ typedef struct {
  *  @author Andreas Kaeberlein
  */
 typedef struct t_iicm {
-    volatile t_iicm_reg*    regPtr;             /**<  pointer to IICMB hardware registers */
+//    volatile t_iicm_reg*    regPtr;             /**<  pointer to IICMB hardware registers */
     uint8_t                 uint8FSM;           /**<  Soft I2C state machine @see IICMB_FSM */
     uint8_t                 uint8WrRd : 1;      /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */
     uint8_t                 uint8Adr;           /**<  I2C slave address */
