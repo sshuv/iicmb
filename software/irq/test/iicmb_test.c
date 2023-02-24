@@ -55,22 +55,61 @@
 
 
 /**
+ *  prints register of iicmb
+ */
+void print_reg_iicmb ( uint8_t* iicmb )
+{
+	/* print to console */
+	printf (  	"INFO:iicmb_reg:dump:\n"
+				"  CSR  = 0x%02x\n"
+				"  DPR  = 0x%02x\n"
+				"  CMDR = 0x%02x\n"
+				"  FSMR = 0x%02x\n"
+				,
+				iicmb[0],
+				iicmb[1],
+				iicmb[2],
+				iicmb[3]
+			);
+}
+
+
+
+/**
  *  Main
  *  ----
  */
 int main ()
 {
     /** Variables **/
+	uint8_t		uint8RegIICMB[4] = {0xff, 0x00, 0x80, 0x00};	// register handle for IICMB: CSR, DPR, CMDR, FSMR
+	t_iicmb  	iicm;											// handle for IICMB driver
 	
-
+	
+	
 	/* entry message */
 	printf("INFO:%s: unit test started\n", __FUNCTION__);
-	printf("ERROR:%s:", __FUNCTION__);
+	
+	/* iicm_init */
+	printf("INFO:%s:iicm_init\n", __FUNCTION__);
+	uint8RegIICMB[0] = 0xf5;	// CSR, checked by init
+	if ( 0 != iicmb_init(&iicm, (void*) &uint8RegIICMB, 5) ) {
+		printf("ERROR:%s:iicm_init: failed\n", __FUNCTION__);
+		print_reg_iicmb( (uint8_t*) &uint8RegIICMB);
+		goto ERO_END;
+	}
 	
 
 
 
+
+
+
+
 	
+	/* end register dump */
+	print_reg_iicmb((uint8_t*) &uint8RegIICMB);
+
 	/* avoid warning */
 	goto OK_END;
     /* gracefull end */
