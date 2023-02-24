@@ -46,7 +46,7 @@ LINKER = gcc
 
 # set compiler flags
 ifeq ($(origin CFLAGS), undefined)
-  CFLAGS = -c -O -Wall -Wextra -Wconversion
+  CFLAGS = -c -O -Wall -Wextra -Wconversion -I . -I ../
 endif
 
 # linking flags here
@@ -58,14 +58,14 @@ endif
 all: iicmb_test
 
 
-iicmb_test: iicmb_main.o iicmb.o
-	$(LINKER) ./obj/cb_main.o ./obj/cb.o $(LFLAGS) -o ./test/cb_main
+iicmb_test: iicmb_test.o iicmb.o
+	$(LINKER) ./obj/iicmb_test.o ./obj/iicmb.o $(LFLAGS) -o ./test/iicmb_test
 
 iicmb.o: ./iicmb.c
 	$(CC) $(CFLAGS) ./iicmb.c -o ./obj/iicmb.o
 
-iicmb_main.o: ./test/iicmb_main.c
-	$(CC) $(CFLAGS) ./test/iicmb_main.c -o ./obj/iicmb_main.o
+iicmb_test.o: ./test/iicmb_test.c
+	$(CC) $(CFLAGS) ./test/iicmb_test.c -o ./obj/iicmb_test.o
 
 ci: ./iicmb.c
 	$(CC) $(CFLAGS) -Werror ./iicmb.c -o ./obj/iicmb.o
