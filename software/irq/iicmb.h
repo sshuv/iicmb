@@ -120,6 +120,27 @@
 
 
 /**
+ * @defgroup IICMB_RW
+ *
+ * Return values of iicm_write, iicm_read, iicm_wr_rd
+ *
+ * @{
+ */
+#define IICMB_OK            (0x00)      /**<  No Error */
+#define IICMB_BUSY          (0x01)      /**<  No Error */
+/** @} */
+
+
+
+/** C++ compatibility **/
+#ifdef __cplusplus
+extern "C"
+{
+#endif // __cplusplus
+
+
+
+/**
  *  @typedef t_iicmb_fsm;
  *
  *  @brief  FSM
@@ -144,41 +165,25 @@ typedef enum
 
 
 /**
- * @defgroup IICMB_ERO
+ *  @typedef t_iicmb_ero;
  *
- * State FSM
+ *  @brief  Errors
  *
- * @{
+ *  Encoutered errors while execution
+ *
+ *  @since  2023-02-24
+ *  @author Andreas Kaeberlein
  */
-#define IICMB_OKAY              (0x00)      /**<  No Error */
-#define IICMB_ERROR             (-1)        /**<  General Error */
-#define IICMB_ERO_NOSLAVE       (0x01)      /**<  Slave not responding */
-#define IICMB_ERO_ARBLOST       (0x02)      /**<  Arbitration lost */
-#define IICMB_ERO_IICMB         (0x04)      /**<  Something went wrong on IICMB */
-#define IICMB_ERO_TF_INC        (0x08)      /**<  Transfer incomplete */
-#define IICMB_ERO_FSM           (0x40)      /**<  FSM Error */
-#define IICMB_ERO_UNKNOWN       (0x80)      /**<  Unknown Error */
-/** @} */
-
-
-/**
- * @defgroup IICMB_RW
- *
- * Return values of iicm_write, iicm_read, iicm_wr_rd
- *
- * @{
- */
-#define IICMB_OK            (0x00)      /**<  No Error */
-#define IICMB_BUSY          (0x01)      /**<  No Error */
-/** @} */
-
-
-
-/** C++ compatibility **/
-#ifdef __cplusplus
-extern "C"
+typedef enum
 {
-#endif // __cplusplus
+    NO,         /**<  No Error */
+    NOSLAVE,    /**<  Slave not responding */
+    ARBLOST,    /**<  Arbitration lost */
+    IICMB,      /**<  I2C controller encoutered issue */
+    ICTF,       /**<  Transfer incomplete */
+    FSM,        /**<  non designed path of FSM used */
+    UNKNOWN     /**<  Something went wrong */
+} t_iicmb_ero;
 
 
 
@@ -218,6 +223,7 @@ typedef struct {
 typedef struct t_iicmb {
     volatile t_iicm_reg*    iicmb;              /**<  pointer to IICMB hardware registers */
     uint8_t                 uint8FSM;           /**<  Soft I2C state machine @see IICMB_FSM */
+    volatile t_iicmb_ero    error;              /**<  Encoutered errors while exec, #t_iicmb_ero */
     uint8_t                 uint8WrRd : 1;      /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */
     uint8_t                 uint8Adr;           /**<  I2C slave address */
     uint8_t                 uint8Error;         /**<  Error in Transfer @see IICMB_ERO */
@@ -246,7 +252,8 @@ int iicmb_set_bus(t_iicmb *self, uint8_t num);
 
 
 
-/** @brief init
+/**
+ *  @brief init
  *
  *  init sw handle and IICMB core
  *
@@ -304,22 +311,18 @@ int iicm_busy(t_iicmb *this);
 
 
 
-/** @brief busy
+/** @brief error?
  *
- *  checks if the FSM is busy
+ *  check if an error is occured while transmission, #t_iicmb_ero
  *
  *  @param[in,out]  this                storage element
  *  @return         int                 state
- *  @retval         IICMB_ERO_NO        All okay
- *  @retval         IICMB_ERO_NOSLAVE   Slave not responding on address
- *  @retval         IICMB_ERO_ARBLOST   Arbitration lost
- *  @retval         IICMB_ERO_IICMB     Something went wrong on IICMB
- *  @retval         IICMB_ERO_FSM       FSM Error, non designed path used
- *  @retval         IICMB_ERO_UNKNOWN   Unknown error on IICMB
+ *  @retval         0                   OKAY
+ *  @retval         -1                  Error, use decode function for details
  *  @since          2022-06-16
  *  @author         Andreas Kaeberlein
  */
-int iicm_error(t_iicmb *this);
+int iicmb_is_error(t_iicmb *self);
 
 
 

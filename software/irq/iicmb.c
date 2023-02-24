@@ -256,7 +256,7 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
 
     self->uint8FSM = IICMB_FSM_IDLE;    // Soft I2C state machine
     self->uint8WrRd = 0;                // no write/read interaction requested
-    self->uint8Error = IICMB_OKAY;      // no error in transfer
+    self->error = NO;                   // Driver runs without error
     self->uint16WrByteLen = 0;          // Total Number of Bytes to transfer
     self->uint16WrByteIs = 0;           // Number of Bytes processed (Sent/Receive)
     self->uint8PtrData = NULL;          // Read/Write Buffer Pointer
@@ -286,7 +286,7 @@ int iicm_completion_busy_wait(void)
         uint8Rsp = (*(volatile uint8_t*) (IICMB_BASE+IICMB_CMDR));
     }
     /* graceful end */
-    return IICMB_OKAY;
+    return 0;
 }
 
 
@@ -315,15 +315,15 @@ void iicm_fsm(t_iicmb *this)
                         /* All Done */
                         case IICMB_RSP_DONE:
                             /* check for complete transfer */
-                            if ( (this->uint16WrByteLen == this->uint16WrByteIs) || (this->uint16RdByteLen == this->uint16RdByteIs) ) {
-                                this->uint8Error &= (uint8_t) ~IICMB_ERO_TF_INC;    // clear incomplete flag
+                            if ( !((this->uint16WrByteLen == this->uint16WrByteIs) && (this->uint16RdByteLen == this->uint16RdByteIs)) ) {
+                                this->error = ICTF; // transfer not complete
                             }
                             break;
                         case IICMB_RSP_ERR:
-                            this->uint8Error |= IICMB_ERO_IICMB;
+                            this->error = IICMB;    // I2C controller encoutered issue
                             break;
                         default:
-                            this->uint8Error |= IICMB_ERO_UNKNOWN;
+                            this->error = UNKNOWN;  // Something went wrong
                             break;
                     }
                     this->uint8FSM = IICMB_FSM_IDLE;
@@ -333,7 +333,7 @@ void iicm_fsm(t_iicmb *this)
                     break;  // clears only last IRQ after stopbit
                 /* something unexpedted */
                 default:
-                    this->uint8Error |= IICMB_ERO_FSM;  // non designed path of FSM used
+                    this->error = FSM;  // non designed path of FSM used
                     break;
             }
             return; // leave ISR
@@ -346,18 +346,18 @@ void iicm_fsm(t_iicmb *this)
                 case IICMB_RSP_NAK: break;  // last byte nck
                 /* exception: arbitration lost */
                 case IICMB_RSP_ARB_LOST:
-                    this->uint8Error |= IICMB_ERO_ARBLOST;  // arbitration lost
+                    this->error = ARBLOST;  // arbitration lost
                     this->uint8FSM = IICMB_FSM_WT_IDLE;
                     (void) iicmb_stop_bit(this);
                     return;
                 /* exception: IICMB unknown error */
-                case IICMB_ERO_IICMB:
-                    this->uint8Error |= IICMB_ERO_IICMB;    // arbitration lost
+                case IICMB_RSP_ERR:
+                    this->error = IICMB;    // I2C controller runs into error
                     this->uint8FSM = IICMB_FSM_IDLE;
                     return;
                 /* all okay */
                 default:
-                    this->uint8Error |= IICMB_ERO_UNKNOWN;  // unknown error in IICMB
+                    this->error = UNKNOWN;  // unknown error in IICMB
                     return;
             }
             /* Byte Write FSM */
@@ -373,7 +373,7 @@ void iicm_fsm(t_iicmb *this)
                 /* slave responsible? */
                 case IICMB_FSM_WR_ADR_CHK:
                     if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
-                        this->uint8Error |= IICMB_ERO_NOSLAVE;  // NCK on address byte
+                        this->error = NOSLAVE;  // NCK on address byte
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
                         (void) iicmb_stop_bit(this);
                         break;
@@ -411,7 +411,7 @@ void iicm_fsm(t_iicmb *this)
                     break;
                 /* something strange happend */
                 default:
-                    this->uint8Error |= IICMB_ERO_FSM;  // non designed path of FSM used
+                    this->error = FSM;  // non designed path of FSM used
                     break;
             }
             return; // leave ISR, called with next IRQ
@@ -424,18 +424,18 @@ void iicm_fsm(t_iicmb *this)
                 case IICMB_RSP_NAK: break;  // last byte nck
                 /* exception: arbitration lost */
                 case IICMB_RSP_ARB_LOST:
-                    this->uint8Error |= IICMB_ERO_ARBLOST;  // arbitration lost
+                    this->error = ARBLOST;  // arbitration lost
                     this->uint8FSM = IICMB_FSM_WT_IDLE;
                     (void) iicmb_stop_bit(this);
                     return;
                 /* exception: IICMB unknown error */
-                case IICMB_ERO_IICMB:
-                    this->uint8Error |= IICMB_ERO_IICMB;    // arbitration lost
+                case IICMB_RSP_ERR:
+                    this->error = IICMB;    // I2C controller encoutered issue
                     this->uint8FSM = IICMB_FSM_IDLE;
                     return;
                 /* all okay */
                 default:
-                    this->uint8Error |= IICMB_ERO_UNKNOWN;  // unknown error in IICMB
+                    this->error = UNKNOWN;  // unknown error in IICMB
                     return;
             }
             /* Byte Read FSM */
@@ -452,7 +452,7 @@ void iicm_fsm(t_iicmb *this)
                 case IICMB_FSM_RD_ADR_CHK:
                     /* Slave Not responsible */
                     if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
-                        this->uint8Error |= IICMB_ERO_NOSLAVE;  // NCK on address byte
+                        this->error = NOSLAVE;  // NCK on address byte
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
                         (void) iicmb_stop_bit(this);
                         break;
@@ -477,7 +477,6 @@ void iicm_fsm(t_iicmb *this)
                         /* last byte sent */
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
                         (void) iicmb_stop_bit(this);
-
                         break; // leave ISR
                     }
                     /* More Bytes Pending, Read with ACK */
@@ -490,13 +489,13 @@ void iicm_fsm(t_iicmb *this)
                     break;  // wait for byte transfer on mext IRQ
                 /* something strange happend */
                 default:
-                    this->uint8Error |= IICMB_ERO_FSM;  // non designed path of FSM used
+                    this->error = FSM;  // non designed path of FSM used
                     break;
             }
             return; // leave ISR, called with next IRQ
         /* default */
         default:
-            this->uint8Error |= IICMB_ERO_FSM;  // non designed path of FSM used
+            this->error = FSM;  // non designed path of FSM used
             break;
     }
     /* normal end */
@@ -512,20 +511,23 @@ void iicm_fsm(t_iicmb *this)
 int iicm_busy(t_iicmb *this)
 {
     if ( IICMB_FSM_IDLE == this->uint8FSM ) {
-        return IICMB_OKAY;
+        return 0;
     }
-    return IICMB_ERROR;
+    return -1;
 }
 
 
 
 /**
- *  iicm_error
+ *  icmb_is_error
  *    return ero code
  */
-int iicm_error(t_iicmb *this)
+int iicmb_is_error(t_iicmb *self)
 {
-    return (int) this->uint8Error;
+    if ( NO == self->error ) {
+        return 0;
+    }
+    return -1;
 }
 
 
@@ -546,7 +548,7 @@ int iicm_write(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len)
         default: return IICMB_BUSY;
     }
     /* set-up next request */
-    this->uint8Error = IICMB_ERO_TF_INC;    // set transfer as incomplete, cleared at end of succesfull transfer
+    this->error = NO;
     this->uint8Adr = (uint8_t) (adr7 << 1); // prepare address for Read/Write bit set
     this->uint16WrByteLen = len;
     this->uint16WrByteIs = 0;
@@ -576,7 +578,7 @@ int iicm_read(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len)
         default: return IICMB_BUSY;
     }
     /* set-up next request */
-    this->uint8Error = IICMB_ERO_TF_INC;    // set transfer as incomplete, cleared at end of succesfull transfer
+    this->error = NO;
     this->uint8Adr = (uint8_t) (adr7 << 1);
     this->uint16RdByteLen = len;
     this->uint16RdByteIs = 0;
@@ -606,7 +608,7 @@ int iicm_wr_rd(t_iicmb *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_
         default: return IICMB_BUSY;
     }
     /* set-up next request */
-    this->uint8Error = IICMB_ERO_TF_INC;    // set transfer as incomplete, cleared at end of succesfull transfer
+    this->error = NO;
     this->uint8Adr = (uint8_t) (adr7 << 1); // define address
     /* write requested? */
     this->uint16WrByteLen = wrLen;
