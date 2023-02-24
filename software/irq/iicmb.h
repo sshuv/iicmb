@@ -120,6 +120,30 @@
 
 
 /**
+ *  @typedef t_iicmb_fsm;
+ *
+ *  @brief  FSM
+ *
+ *  Execution state of IICMB core
+ *
+ *  @since  2023-02-24
+ *  @author Andreas Kaeberlein
+ */
+typedef enum
+{
+    IDLE,           /**<  Idle: Nothing to to */
+    WT_IDLE,        /**<  Idle: Wait for execution of stopbit */
+    WR_ADR_SET,     /**<  Write: Slave Address */
+    WR_ADR_CHK,     /**<  Write: slave responsible? */
+    WR_BYTE,        /**<  Write: Sent Databyte */
+    RD_ADR_SET,     /**<  Read: Write Slave Address */
+    RD_ADR_CHK,     /**<  Read: slave responsible? */
+    RD_BYTE         /**<  Read: Read byte from slave */
+} t_iicmb_fsm;
+
+
+
+/**
  * @defgroup IICMB_ERO
  *
  * State FSM
@@ -171,17 +195,17 @@ extern "C"
  *  @author Andreas Kaeberlein
  */
 typedef struct {
-    volatile uint8_t        CSR;    /**<  Control/Status Register   R/W */
-    volatile uint8_t        DPR;    /**<  Data/Parameter Register   R/W */
-    volatile uint8_t        CMDR;   /**<  Command Register          R/W */
-    volatile const uint8_t  FSMR;   /**<  FSM States Register       RO  */
+    uint8_t        CSR;    /**<  Control/Status Register   R/W */
+    uint8_t        DPR;    /**<  Data/Parameter Register   R/W */
+    uint8_t        CMDR;   /**<  Command Register          R/W */
+    const uint8_t  FSMR;   /**<  FSM States Register       RO  */
 
 } __attribute__((packed)) t_iicm_reg;
 
 
 
 /**
- *  @typedef t_iicm
+ *  @typedef t_iicmb
  *
  *  @brief  IICMB driver handle
  *
@@ -191,8 +215,8 @@ typedef struct {
  *  @since  June 13, 2022
  *  @author Andreas Kaeberlein
  */
-typedef struct t_iicm {
-//    volatile t_iicm_reg*    regPtr;             /**<  pointer to IICMB hardware registers */
+typedef struct t_iicmb {
+    volatile t_iicm_reg*    iicmb;              /**<  pointer to IICMB hardware registers */
     uint8_t                 uint8FSM;           /**<  Soft I2C state machine @see IICMB_FSM */
     uint8_t                 uint8WrRd : 1;      /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */
     uint8_t                 uint8Adr;           /**<  I2C slave address */
@@ -201,69 +225,8 @@ typedef struct t_iicm {
     uint16_t                uint16WrByteIs;     /**<  Current number of bytes written */
     uint16_t                uint16RdByteLen;    /**<  Total number of bytes to read */
     uint16_t                uint16RdByteIs;     /**<  Current number of bytes readen */
-    uint8_t*                uint8PtrWrBuf;      /**<  Write data buffer */
-    uint8_t*                uint8PtrRdBuf;      /**<  Read data buffer */
-} t_iicm;
-
-
-
-/** @brief I2C enable
- *
- *  enables IICM core
- *
- *  @return         int                 state
- *  @retval         0                   OK
- *  @retval         -1                  FAIL
- *  @since          2022-06-09
- *  @author         Andreas Kaeberlein
- */
-int iicm_enable(void);
-
-
-
-/** @brief I2C disable
- *
- *  disables IICM core
- *
- *  @return         int                 state
- *  @retval         0                   OK
- *  @retval         -1                  FAIL
- *  @since          2022-06-09
- *  @author         Andreas Kaeberlein
- */
-int iicm_disable(void);
-
-
-
-/** @brief IRQ enable
- *
- *  enables IRQ at status register change
- *  cleared (reset to '0') by reading CMDR register.
- *  When a command is completed, one of the four status bits (DON, NAK, AL or ERR) becomes
- *  '1', depending on the completion results. In the same moment, the interrupt output
- *  is activated
- *
- *  @return         int                 state
- *  @retval         0                   OK
- *  @retval         -1                  FAIL
- *  @since          2022-06-09
- *  @author         Andreas Kaeberlein
- */
-int iicm_irq_enable(void);
-
-
-
-/** @brief IRQ disable
- *
- *  disables IRQ on status register change
- *
- *  @return         int                 state
- *  @retval         0                   OK
- *  @retval         -1                  FAIL
- *  @since          2022-06-10
- *  @author         Andreas Kaeberlein
- */
-int iicm_irq_disable(void);
+    uint8_t*                uint8PtrData;       /**<  Read/Write data buffer */
+} t_iicmb;
 
 
 
@@ -271,14 +234,15 @@ int iicm_irq_disable(void);
  *
  *  set active bus number
  *
- *  @param[in]      busNum              active I2C bus 0..15
+ *  @param[in,out]  self                driver handle
+ *  @param[in]      num                 active I2C bus number 0..15
  *  @return         int                 state
  *  @retval         0                   OK
  *  @retval         -1                  FAIL
  *  @since          2022-06-10
  *  @author         Andreas Kaeberlein
  */
-int iicmb_set_bus(uint8_t busNum);
+int iicmb_set_bus(t_iicmb *self, uint8_t num);
 
 
 
@@ -286,14 +250,16 @@ int iicmb_set_bus(uint8_t busNum);
  *
  *  init sw handle and IICMB core
  *
- *  @param[in,out]  this                storage element
+ *  @param[in,out]  self                driver handle
+ *  @param[in,out]  iicmbAdr            base address of IICMB core
+ *  @param[in,out]  bus                 default used I2C bus
  *  @return         int                 state
  *  @retval         0                   OK
  *  @retval         -1                  FAIL
  *  @since          2022-06-13
  *  @author         Andreas Kaeberlein
  */
-int iicm_init(t_iicm *this);
+int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus);
 
 
 
@@ -319,7 +285,7 @@ int iicm_completion_busy_wait(void);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-void iicm_fsm(t_iicm *this);
+void iicm_fsm(t_iicmb *this);
 
 
 
@@ -334,7 +300,7 @@ void iicm_fsm(t_iicm *this);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_busy(t_iicm *this);
+int iicm_busy(t_iicmb *this);
 
 
 
@@ -353,7 +319,7 @@ int iicm_busy(t_iicm *this);
  *  @since          2022-06-16
  *  @author         Andreas Kaeberlein
  */
-int iicm_error(t_iicm *this);
+int iicm_error(t_iicmb *this);
 
 
 
@@ -372,7 +338,7 @@ int iicm_error(t_iicm *this);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_write(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len);
+int iicm_write(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
 
 
 
@@ -391,7 +357,7 @@ int iicm_write(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_read(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len);
+int iicm_read(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
 
 
 
@@ -412,7 +378,7 @@ int iicm_read(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_wr_rd(t_iicm *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t rd[], uint16_t rdLen);
+int iicm_wr_rd(t_iicmb *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t rd[], uint16_t rdLen);
 
 
 

@@ -26,139 +26,246 @@
 
 
 
+/**
+ *  @defgroup SFCB_PRINTF_EN
+ *
+ *  redirect sfcb_printf to printf
+ *
+ *  @{
+ */
+#ifdef IICMB_PRINTF_EN
+    #include <stdio.h>  // allow outputs in unit test
+    #define iicmb_printf(...) printf(__VA_ARGS__)
+#else
+    #define iicmb_printf(...)
+#endif
+/** @} */   // DEBUG
+
 
 
 /**
- *  iicm_start_bit()
- *    send start bit on i2c bus
+ *  @defgroup FALL_THROUGH
+ *
+ *  @brief Fallthrough
+ *
+ *  Defines fallthrough only for newer compiler
+ *  avoids warning 'error: empty declaration __attribute__((fallthrough))'
+ *
+ *  @since  2023-02-24
+ *  @see https://stackoverflow.com/questions/45349079/how-to-use-attribute-fallthrough-correctly-in-gcc
  */
-inline void iicm_start_bit(void)
+#if defined(__GNUC__) && __GNUC__ >= 7
+    #define FALL_THROUGH __attribute__ ((fallthrough))
+#else
+    #define FALL_THROUGH ((void)0)
+#endif /* __GNUC__ >= 7 */
+/** @} */   // FALL_THROUGH
+
+
+
+/**
+ *  @brief startbit
+ *
+ *  send start bit on i2c bus
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         void
+ *  @since          2023-02-24
+ *  @author         Andreas Kaeberlein
+ */
+static inline void iicmb_start_bit(t_iicmb *self)
 {
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CMDR)) = IICMB_CMD_START;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* set start bit */
+    self->iicmb->CMDR = IICMB_CMD_START;
 }
 
 
+
 /**
- *  iicm_stop_bit()
- *    send stop bit on i2c bus
+ *  @brief stopbit
+ *
+ *  send stop bit on i2c bus
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         void
+ *  @since          2023-02-24
+ *  @author         Andreas Kaeberlein
  */
-inline void iicm_stop_bit(void)
+static inline void iicmb_stop_bit(t_iicmb *self)
 {
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CMDR)) = IICMB_CMD_STOP;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* set stop bit */
+    self->iicmb->CMDR = IICMB_CMD_STOP;
 }
 
 
+
 /**
- *  iicm_enable()
- *    enables I2C core
+ *  @brief I2C enable
+ *
+ *  enables IICM core
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         int                 state
+ *  @retval         0                   OK
+ *  @retval         -1                  FAIL
+ *  @since          2022-06-09
+ *  @author         Andreas Kaeberlein
  */
-int iicm_enable(void)
+static int iicmb_enable(t_iicmb *self)
 {
-    /* enable core */
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) |= IICMB_CSR_IICM_ENA;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* modify */
+    self->iicmb->CSR |= IICMB_CSR_IICM_ENA; // enable core
     /* check */
-    if ( IICMB_CSR_IICM_ENA != ((*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) & IICMB_CSR_IICM_ENA) ) {
-        return IICMB_ERROR;
+    if ( 0 == (self->iicmb->CSR & IICMB_CSR_IICM_ENA) ) {
+        return -1;
     }
     /* normal end */
-    return IICMB_OKAY;
+    return 0;
 }
 
 
+
 /**
- *  iicm_disable()
- *    disables I2C core
+ *  @brief IICMB disable
+ *
+ *  disables IICM core
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         int                 state
+ *  @retval         0                   OK
+ *  @retval         -1                  FAIL
+ *  @since          2022-06-09
+ *  @author         Andreas Kaeberlein
  */
-int iicm_disable(void)
+static int iicmb_disable(t_iicmb *self)
 {
-    /* enable core */
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) &= ~IICMB_CSR_IICM_ENA;
-    /* check */
-    if ( IICMB_CSR_IICM_ENA != ((*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) & IICMB_CSR_IICM_ENA) ) {
-        return IICMB_ERROR;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* modify */
+    self->iicmb->CSR &= (uint8_t) ~IICMB_CSR_IICM_ENA;  // clear core enable
+    /* check, for bit clear */
+    if ( 0 != (self->iicmb->CSR & IICMB_CSR_IICM_ENA) ) {
+        return -1;  // Error
     }
     /* graceful end */
-    return IICMB_OKAY;
+    return 0;
 }
 
 
+
 /**
- *  iicm_irq_enable()
- *    enables IRQ
+ *  @brief IRQ enable
+ *
+ *  enables IRQ at status register change
+ *  cleared (reset to '0') by reading CMDR register.
+ *  When a command is completed, one of the four status bits (DON, NAK, AL or ERR) becomes
+ *  '1', depending on the completion results. In the same moment, the interrupt output
+ *  is activated
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         int                 state
+ *  @retval         0                   OK
+ *  @retval         -1                  FAIL
+ *  @since          2022-06-09
+ *  @author         Andreas Kaeberlein
  */
-int iicm_irq_enable(void)
+static int iicmb_irq_enable(t_iicmb *self)
 {
-    /* enable core */
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) |= IICMB_CSR_IRQ_ENA;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* modify */
+    self->iicmb->CSR |= IICMB_CSR_IRQ_ENA;  // set IRQ enable bit
     /* check */
-    if ( IICMB_CSR_IRQ_ENA != ((*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) & IICMB_CSR_IRQ_ENA) ) {
-        return IICMB_ERROR;
+    if ( 0 == (self->iicmb->CSR & IICMB_CSR_IRQ_ENA) ) {
+        return -1;
     }
     /* normal end */
-    return IICMB_OKAY;
+    return 0;
 }
+
 
 
 /**
- *  iicm_irq_disable()
- *    disables IRQ
+ *  @brief IRQ disable
+ *
+ *  disables IRQ on status register change
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         int                 state
+ *  @retval         0                   OK
+ *  @retval         -1                  FAIL
+ *  @since          2022-06-10
+ *  @author         Andreas Kaeberlein
  */
-int iicm_irq_disable(void)
+static int iicmb_irq_disable(t_iicmb *self)
 {
-    /* enable core */
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) &= ~IICMB_CSR_IRQ_ENA;
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* modify */
+    self->iicmb->CSR &= (uint8_t) ~IICMB_CSR_IRQ_ENA;   // clear IRQ enable bit
     /* check */
-    if ( IICMB_CSR_IRQ_ENA != ((*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) & IICMB_CSR_IRQ_ENA) ) {
-        return IICMB_ERROR;
+    if ( 0 != (self->iicmb->CSR & IICMB_CSR_IRQ_ENA) ) {
+        return -1;
     }
     /* graceful end */
-    return IICMB_OKAY;
+    return 0;
 }
+
 
 
 /**
  *  iicmb_set_bus
  *    set bus number
  */
-int iicmb_set_bus(uint8_t busNum)
+int iicmb_set_bus(t_iicmb *self, uint8_t num)
 {
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* set bus number */
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_DPR))   = (busNum & IICMB_CSR_BUS); // preload data register
-    (*(volatile uint8_t*) (IICMB_BASE+IICMB_CMDR))  = IICMB_CMD_SET_BUS;        // set bus id
+    self->iicmb->DPR = (uint8_t) (num & IICMB_CSR_BUS); // preload data/parameter register
+    self->iicmb->CMDR = IICMB_CMD_SET_BUS;              // set bus id
     /* check for setting */
-    if ( (busNum & IICMB_CSR_BUS) != ((*(volatile uint8_t*) (IICMB_BASE+IICMB_CSR)) & IICMB_CSR_BUS) ) {
-        return IICMB_ERROR;
+    if ( num != (self->iicmb->CSR & IICMB_CSR_BUS) ) {
+        return -1;
     }
     /* graceful end */
-    return IICMB_OKAY;
+    return 0;
 }
 
 
 /**
- *  iicm_init
+ *  iicmb_init
  *    init sw handle and IICMB core
  */
-int iicm_init(t_iicm *this)
+int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
 {
     /** Variables **/
     int ret = 0;    // common return value
 
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* Init driver handle */
-    this->uint8FSM = IICMB_FSM_IDLE;    // Soft I2C state machine
-    this->uint8WrRd = 0;                // no write/read interaction requested
-    this->uint8Error = IICMB_OKAY;      // no error in transfer
-    this->uint16WrByteLen = 0;          // Total Number of Bytes to transfer
-    this->uint16WrByteIs = 0;           // Number of Bytes processed (Sent/Receive)
-    this->uint8PtrWrBuf = NULL;         // Write Buffer Pointer
-    this->uint8PtrRdBuf = NULL;         // Read Buffer Pointer
-    //this->regPtr = NULL;                // IICMB handle not mapped
+    self->iicmb = (volatile t_iicm_reg*) iicmbAdr;  // register set of IICMB
+
+
+    self->uint8FSM = IICMB_FSM_IDLE;    // Soft I2C state machine
+    self->uint8WrRd = 0;                // no write/read interaction requested
+    self->uint8Error = IICMB_OKAY;      // no error in transfer
+    self->uint16WrByteLen = 0;          // Total Number of Bytes to transfer
+    self->uint16WrByteIs = 0;           // Number of Bytes processed (Sent/Receive)
+    self->uint8PtrData = NULL;          // Read/Write Buffer Pointer
 
     /* init core */
-    ret |= iicm_disable();      // core disable
-    ret |= iicmb_set_bus(0);    // default bus 0
-    ret |= iicm_irq_enable();   // enable IRQs
-    ret |= iicm_enable();       // enable IICMB
-
+    ret |= iicmb_disable(self);         // core disable
+    ret |= iicmb_set_bus(self, bus);    // init with bus desired bus number
+    ret |= iicmb_irq_enable(self);      // enable IRQs
+    ret |= iicmb_enable(self);          // enable IICMB
     /* end */
     return ret;
 }
@@ -187,7 +294,7 @@ int iicm_completion_busy_wait(void)
  *  iicm_fsm()
  *    IICMB fsm, triggered by ISR
  */
-void iicm_fsm(t_iicm *this)
+void iicm_fsm(t_iicmb *this)
 {
     /** Variables **/
     uint8_t     uint8CmdReg;
@@ -241,7 +348,7 @@ void iicm_fsm(t_iicm *this)
                 case IICMB_RSP_ARB_LOST:
                     this->uint8Error |= IICMB_ERO_ARBLOST;  // arbitration lost
                     this->uint8FSM = IICMB_FSM_WT_IDLE;
-                    (void) iicm_stop_bit();
+                    (void) iicmb_stop_bit(this);
                     return;
                 /* exception: IICMB unknown error */
                 case IICMB_ERO_IICMB:
@@ -268,7 +375,7 @@ void iicm_fsm(t_iicm *this)
                     if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                         this->uint8Error |= IICMB_ERO_NOSLAVE;  // NCK on address byte
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
-                        (void) iicm_stop_bit();
+                        (void) iicmb_stop_bit(this);
                         break;
                     }
                     this->uint8FSM = IICMB_FSM_WR_DAT;  // go one with data transfer
@@ -279,7 +386,7 @@ void iicm_fsm(t_iicm *this)
                     if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                         /* prepare IDLE on bus */
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
-                        (void) iicm_stop_bit();
+                        (void) iicmb_stop_bit(this);
                         break;  // leave byte write FSM
                     }
                     /* last byte sent */
@@ -289,15 +396,15 @@ void iicm_fsm(t_iicm *this)
                         /* write-read access? */
                         if ( 0 != this->uint8WrRd ) {
                             this->uint8FSM = IICMB_FSM_RD_ADR_SET;  // go in FSM read path
-                            (void) iicm_start_bit();
+                            (void) iicmb_start_bit(this);
                         } else {
                             this->uint8FSM = IICMB_FSM_WT_IDLE;     // last byte sent, go in idle
-                            (void) iicm_stop_bit();
+                            (void) iicmb_stop_bit(this);
                         }
                         break;  // leave, trigger with next IRQ
                     }
                     /* write next byte to IICMB */
-                    (*(volatile uint8_t*) (IICMB_BASE+IICMB_DPR)) = this->uint8PtrWrBuf[this->uint16WrByteIs];
+                    (*(volatile uint8_t*) (IICMB_BASE+IICMB_DPR)) = this->uint8PtrData[this->uint16WrByteIs];
                     (*(volatile uint8_t*) (IICMB_BASE+IICMB_CMDR)) = IICMB_CMD_WRITE;
                     /* data pointer update */
                     this->uint16WrByteIs = this->uint16WrByteIs + 1;
@@ -319,7 +426,7 @@ void iicm_fsm(t_iicm *this)
                 case IICMB_RSP_ARB_LOST:
                     this->uint8Error |= IICMB_ERO_ARBLOST;  // arbitration lost
                     this->uint8FSM = IICMB_FSM_WT_IDLE;
-                    (void) iicm_stop_bit();
+                    (void) iicmb_stop_bit(this);
                     return;
                 /* exception: IICMB unknown error */
                 case IICMB_ERO_IICMB:
@@ -347,7 +454,7 @@ void iicm_fsm(t_iicm *this)
                     if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                         this->uint8Error |= IICMB_ERO_NOSLAVE;  // NCK on address byte
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
-                        (void) iicm_stop_bit();
+                        (void) iicmb_stop_bit(this);
                         break;
                     }
                     /* next state read byte */
@@ -363,13 +470,13 @@ void iicm_fsm(t_iicm *this)
                 /* Read: Byte Request */
                 case IICMB_FSM_RD_BYTE:
                     /* capture value */
-                    this->uint8PtrRdBuf[this->uint16RdByteIs] = (*(volatile uint8_t*) (IICMB_BASE+IICMB_DPR));
+                    this->uint8PtrData[this->uint16RdByteIs] = (*(volatile uint8_t*) (IICMB_BASE+IICMB_DPR));
                     this->uint16RdByteIs = this->uint16RdByteIs + 1;
                     /* last byte sent */
                     if ( this->uint16RdByteIs == this->uint16RdByteLen ) {
                         /* last byte sent */
                         this->uint8FSM = IICMB_FSM_WT_IDLE;
-                        (void) iicm_stop_bit();
+                        (void) iicmb_stop_bit(this);
 
                         break; // leave ISR
                     }
@@ -402,7 +509,7 @@ void iicm_fsm(t_iicm *this)
  *  iicm_busy
  *    checks if IICMB FSM is active
  */
-int iicm_busy(t_iicm *this)
+int iicm_busy(t_iicmb *this)
 {
     if ( IICMB_FSM_IDLE == this->uint8FSM ) {
         return IICMB_OKAY;
@@ -416,7 +523,7 @@ int iicm_busy(t_iicm *this)
  *  iicm_error
  *    return ero code
  */
-int iicm_error(t_iicm *this)
+int iicm_error(t_iicmb *this)
 {
     return (int) this->uint8Error;
 }
@@ -427,7 +534,7 @@ int iicm_error(t_iicm *this)
  *  iicm_write
  *    I2C write
  */
-int iicm_write(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
+int iicm_write(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
@@ -443,10 +550,10 @@ int iicm_write(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
     this->uint8Adr = (uint8_t) (adr7 << 1); // prepare address for Read/Write bit set
     this->uint16WrByteLen = len;
     this->uint16WrByteIs = 0;
-    this->uint8PtrWrBuf = buf;
+    this->uint8PtrData = buf;
     this->uint8WrRd = 0;    // only read is performed
     this->uint8FSM = IICMB_FSM_WR_ADR_SET;
-    (void) iicm_start_bit();    // sent start bit, triggers first IRQ
+    (void) iicmb_start_bit(this);    // sent start bit, triggers first IRQ
     /* normal end */
     return IICMB_OK;
 }
@@ -457,7 +564,7 @@ int iicm_write(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
  *  iicm_read
  *    I2C read
  */
-int iicm_read(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
+int iicm_read(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
@@ -473,10 +580,10 @@ int iicm_read(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
     this->uint8Adr = (uint8_t) (adr7 << 1);
     this->uint16RdByteLen = len;
     this->uint16RdByteIs = 0;
-    this->uint8PtrRdBuf = buf;
+    this->uint8PtrData = buf;
     this->uint8WrRd = 0;    // only read is performed
     this->uint8FSM = IICMB_FSM_RD_ADR_SET;
-    (void) iicm_start_bit();    // sent start bit, triggers first IRQ
+    (void) iicmb_start_bit(this);    // sent start bit, triggers first IRQ
     /* normal end */
     return IICMB_OK;
 }
@@ -487,7 +594,7 @@ int iicm_read(t_iicm *this, uint8_t adr7, uint8_t buf[], uint16_t len)
  *  iicm_wr_rd
  *    perform I2C write, repeated start condition and I2C read
  */
-int iicm_wr_rd(t_iicm *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t rd[], uint16_t rdLen)
+int iicm_wr_rd(t_iicmb *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t rd[], uint16_t rdLen)
 {
     /* check for empty data set */
     if ( (0 == wrLen) && (0 == rdLen) ) {
@@ -505,17 +612,17 @@ int iicm_wr_rd(t_iicm *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t
     this->uint16WrByteLen = wrLen;
     this->uint16WrByteIs = 0;
     if ( 0 != wrLen ) {
-        this->uint8PtrWrBuf = wr;
+        this->uint8PtrData = wr;
     } else {
-        this->uint8PtrWrBuf = NULL;
+        this->uint8PtrData = NULL;
     }
     /* read requested? */
     this->uint16RdByteLen = rdLen;
     this->uint16RdByteIs = 0;
     if ( 0 != rdLen ) {
-        this->uint8PtrRdBuf = rd;
+        this->uint8PtrData = rd;
     } else {
-        this->uint8PtrRdBuf = NULL;
+        this->uint8PtrData = NULL;
     }
     /* determine type of interaction */
     if ( 0 != wrLen ) {
@@ -530,7 +637,7 @@ int iicm_wr_rd(t_iicm *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t
         this->uint8WrRd = 0;    // only read is performed
     }
     /* sent start bit, triggers first IRQ */
-    (void) iicm_start_bit();
+    (void) iicmb_start_bit(this);
     /* normal end */
     return IICMB_OK;
 }
