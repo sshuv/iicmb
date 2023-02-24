@@ -62,7 +62,7 @@ iicmb_test: iicmb_test.o iicmb.o
 	$(LINKER) ./obj/iicmb_test.o ./obj/iicmb.o $(LFLAGS) -o ./test/iicmb_test
 
 iicmb.o: ./iicmb.c
-	$(CC) $(CFLAGS) ./iicmb.c -o ./obj/iicmb.o
+	$(CC) $(CFLAGS) -DIICMB_PRINTF_EN ./iicmb.c -o ./obj/iicmb.o
 
 iicmb_test.o: ./test/iicmb_test.c
 	$(CC) $(CFLAGS) ./test/iicmb_test.c -o ./obj/iicmb_test.o
