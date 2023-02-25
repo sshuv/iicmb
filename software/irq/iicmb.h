@@ -26,24 +26,6 @@
 
 
 /**
- * @defgroup IICMB_ADDRESS base and register offsets
- *
- * IICMB base register and offset register defintion
- *
- * @{
- */
-#ifndef IICMB_BASE
-    #define IICMB_BASE      (0xF0000000)    /**<  Base address pointer          */
-#endif
-#define IICMB_CSR           (0x00)          /**<  Control/Status Register   R/W */
-#define IICMB_DPR           (0x01)          /**<  Data/Parameter Register   R/W */
-#define IICMB_CMDR          (0x02)          /**<  Command Register          R/W */
-#define IICMB_FSMR          (0x03)          /**<  FSM States Register       RO  */
-/** @} */
-
-
-
-/**
  * @defgroup IICMB_CSR register bits
  *
  * Control/Status Register bit defintions
@@ -93,41 +75,6 @@
  */
 #define IICMB_I2C_WR    (0x00)      /**<  I2C Write Bit */
 #define IICMB_I2C_RD    (0x01)      /**<  I2C Read Bit */
-/** @} */
-
-
-
-/**
- * @defgroup IICMB_FSM
- *
- * State FSM
- *
- * @{
- */
-#define IICMB_FSM_IDLE          (0x00)      /**<  Idle: Nothing to to */
-#define IICMB_FSM_WT_IDLE       (0x01)      /**<  Idle: Wait for execution of stopbit */
-#define IICMB_FSM_CL            (0xC0)      /**<  Class: FSM Class Bit selector, divides ISR FSM into Read/Write Path */
-#define IICMB_FSM_CL_WR         (0x40)      /**<  Class: Write */
-#define IICMB_FSM_WR_ADR_SET    (0x41)      /**<  Write: Slave Address */
-#define IICMB_FSM_WR_ADR_CHK    (0x42)      /**<  Write: slave responsible? */
-#define IICMB_FSM_WR_DAT        (0x43)      /**<  Write: Sent Databyte */
-#define IICMB_FSM_CL_RD         (0x80)      /**<  Class: Read */
-#define IICMB_FSM_RD_ADR_SET    (0x81)      /**<  Read: Write Slave Address */
-#define IICMB_FSM_RD_ADR_CHK    (0x82)      /**<  Read: slave responsible? */
-#define IICMB_FSM_RD_BYTE       (0x83)      /**<  Read: Read byte from slave */
-/** @} */
-
-
-
-/**
- * @defgroup IICMB_RW
- *
- * Return values of iicm_write, iicm_read, iicm_wr_rd
- *
- * @{
- */
-#define IICMB_OK            (0x00)      /**<  No Error */
-#define IICMB_BUSY          (0x01)      /**<  No Error */
 /** @} */
 
 
@@ -222,15 +169,14 @@ typedef struct {
  */
 typedef struct t_iicmb {
     volatile t_iicm_reg*    iicmb;              /**<  pointer to IICMB hardware registers */
-    uint8_t                 uint8FSM;           /**<  Soft I2C state machine @see IICMB_FSM */
+    volatile t_iicmb_fsm    fsm;                /**<  Soft I2C state machine @see IICMB_FSM */
     volatile t_iicmb_ero    error;              /**<  Encoutered errors while exec, #t_iicmb_ero */
-    uint8_t                 uint8WrRd : 1;      /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */
+    uint8_t                 uint8WrRd;          /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */
     uint8_t                 uint8Adr;           /**<  I2C slave address */
-    uint8_t                 uint8Error;         /**<  Error in Transfer @see IICMB_ERO */
     uint16_t                uint16WrByteLen;    /**<  Total number of bytes to write */
-    uint16_t                uint16WrByteIs;     /**<  Current number of bytes written */
+    volatile uint16_t       uint16WrByteIs;     /**<  Current number of bytes written */
     uint16_t                uint16RdByteLen;    /**<  Total number of bytes to read */
-    uint16_t                uint16RdByteIs;     /**<  Current number of bytes readen */
+    volatile uint16_t       uint16RdByteIs;     /**<  Current number of bytes readen */
     uint8_t*                uint8PtrData;       /**<  Read/Write data buffer */
 } t_iicmb;
 
@@ -274,12 +220,13 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus);
  *
  *  busy wait for completion of last command
  *
+ *  @param[in,out]  self                driver handle
  *  @return         int                 state
- *  @retval         0                   OK
+ *  @retval         0                   IDLE
  *  @since          2022-06-10
  *  @author         Andreas Kaeberlein
  */
-int iicm_completion_busy_wait(void);
+int iicmb_busy_wait(t_iicmb *self);
 
 
 
@@ -287,12 +234,12 @@ int iicm_completion_busy_wait(void);
  *
  *  IICMB state machine
  *
- *  @param[in,out]  this                storage element
+ *  @param[in,out]  self                storage element
  *  @return         void                state
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-void iicm_fsm(t_iicmb *this);
+void iicmb_fsm(t_iicmb *self);
 
 
 
@@ -307,7 +254,7 @@ void iicm_fsm(t_iicmb *this);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_busy(t_iicmb *this);
+int iicmb_busy(t_iicmb *self);
 
 
 
@@ -315,7 +262,7 @@ int iicm_busy(t_iicmb *this);
  *
  *  check if an error is occured while transmission, #t_iicmb_ero
  *
- *  @param[in,out]  this                storage element
+ *  @param[in,out]  self                storage element
  *  @return         int                 state
  *  @retval         0                   OKAY
  *  @retval         -1                  Error, use decode function for details
@@ -330,18 +277,17 @@ int iicmb_is_error(t_iicmb *self);
  *
  *  write to I2C slave
  *
- *  @param[in,out]  this                storage element
+ *  @param[in,out]  self                storage element
  *  @param[in]      adr7                Slave address (7bit)
- *  @param[in]      buf[]               data buffer
+ *  @param[in]      *data               data buffer
  *  @param[in]      len                 data buffer length
  *  @return         int                 state
- *  @retval         IICMB_OK            Next Transfer started
- *  @retval         IICMB_BUSY          Transfer active, wait for finish before next request
- *  @retval         IICMB_ERROR         IICMB FSM Crash, recovery routine necessary
+ *  @retval         0                   OK: Transfer request accepted
+ *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_write(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
+int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
 
 
 
@@ -349,18 +295,17 @@ int iicm_write(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
  *
  *  read from I2C slave
  *
- *  @param[in,out]  this                storage element
+ *  @param[in,out]  self                storage element
  *  @param[in]      adr7                Slave address (7bit)
- *  @param[out]     buf[]               data buffer
+ *  @param[out]     *data               data buffer
  *  @param[in]      len                 data buffer length
  *  @return         int                 state
- *  @retval         IICMB_OK            Next Transfer started
- *  @retval         IICMB_BUSY          Transfer active, wait for finish before next request
- *  @retval         IICMB_ERROR         IICMB FSM Crash, recovery routine necessary
+ *  @retval         0                   OK: Transfer request accepted
+ *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_read(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
+int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
 
 
 
@@ -370,18 +315,17 @@ int iicm_read(t_iicmb *this, uint8_t adr7, uint8_t buf[], uint16_t len);
  *
  *  @param[in,out]  this                storage element
  *  @param[in]      adr7                Slave address (7bit)
- *  @param[in]      wr[]                data written to I2C slave
+ *  @param[out]     *data               data buffer
  *  @param[in]      wrLen               number of written bytes
- *  @param[out]     rd[]                data readen from I2C slave
  *  @param[in]      rdLen               number of read requested bytes
  *  @return         int                 state
- *  @retval         IICMB_OK            Next Transfer started
- *  @retval         IICMB_BUSY          Transfer active, wait for finish before next request
- *  @retval         IICMB_ERROR         IICMB FSM Crash, recovery routine necessary
+ *  @retval         0                   OK: Transfer request accepted
+ *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         2                   FAIL: Read or Write only requested
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicm_wr_rd(t_iicmb *this, uint8_t adr7, uint8_t wr[], uint16_t wrLen, uint8_t rd[], uint16_t rdLen);
+int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint16_t rdLen);
 
 
 
