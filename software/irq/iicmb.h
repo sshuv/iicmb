@@ -315,7 +315,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
  *
  *  @param[in,out]  this                storage element
  *  @param[in]      adr7                Slave address (7bit)
- *  @param[out]     *data               data buffer
+ *  @param[out]     *data               data buffer, write and read takes place in the same buffer, in consequence is the write data by the read data overwritten
  *  @param[in]      wrLen               number of written bytes
  *  @param[in]      rdLen               number of read requested bytes
  *  @return         int                 state
