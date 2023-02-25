@@ -99,14 +99,14 @@ extern "C"
  */
 typedef enum
 {
-    IDLE,           /**<  Idle: Nothing to to */
-    WT_IDLE,        /**<  Idle: Wait for execution of stopbit */
-    WR_ADR_SET,     /**<  Write: Slave Address */
-    WR_ADR_CHK,     /**<  Write: slave responsible? */
-    WR_BYTE,        /**<  Write: Sent Databyte */
-    RD_ADR_SET,     /**<  Read: Write Slave Address */
-    RD_ADR_CHK,     /**<  Read: slave responsible? */
-    RD_BYTE         /**<  Read: Read byte from slave */
+    IICMB_IDLE,         /**<  Idle: Nothing to to */
+    IICMB_WT_IDLE,      /**<  Idle: Wait for execution of stopbit */
+    IICMB_WR_ADR_SET,   /**<  Write: Slave Address */
+    IICMB_WR_ADR_CHK,   /**<  Write: slave responsible? */
+    IICMB_WR_BYTE,      /**<  Write: Sent Databyte */
+    IICMB_RD_ADR_SET,   /**<  Read: Write Slave Address */
+    IICMB_RD_ADR_CHK,   /**<  Read: slave responsible? */
+    IICMB_RD_BYTE       /**<  Read: Read byte from slave */
 } t_iicmb_fsm;
 
 

@@ -250,13 +250,13 @@ static int iicmb_status_decode(t_iicmb *self, uint8_t cmdReg)
         case IICMB_RSP_ARB_LOST:
             iicmb_printf("  ERROR:CMDR: arbitration lost\n");
             self->error = ARBLOST;  // arbitration lost
-            self->fsm = WT_IDLE;
+            self->fsm = IICMB_WT_IDLE;
             return -1;
         /* exception: IICMB unknown error */
         case IICMB_RSP_ERR:
             iicmb_printf("  ERROR:CMDR: IICMB unkown error\n");
             self->error = IICMB;    // I2C controller runs into error
-            self->fsm = IDLE;
+            self->fsm = IICMB_IDLE;
             return -1;
         /* all okay */
         default:
@@ -303,7 +303,7 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
     iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* Init driver handle */
     self->iicmb = (volatile t_iicm_reg*) iicmbAdr;  // register set of IICMB
-    self->fsm = IDLE;           // Soft I2C state machine
+    self->fsm = IICMB_IDLE;     // Soft I2C state machine
     self->uint8WrRd = 0;        // no write/read interaction requested
     self->error = NO;           // Driver runs without error
     self->uint16WrByteLen = 0;  // Total Number of Bytes to transfer
@@ -353,11 +353,11 @@ void iicmb_fsm(t_iicmb *self)
          *  IDLE States
          *    nothing to do
          */
-        case IDLE:
+        case IICMB_IDLE:
             iicmb_status_decode(self, uint8CmdReg);
             return; // clears only last IRQ after stopbit
         /* stop bit succesfull sent? */
-        case WT_IDLE:
+        case IICMB_WT_IDLE:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error leave
@@ -366,13 +366,14 @@ void iicmb_fsm(t_iicmb *self)
             if ( !((self->uint16WrByteLen == self->uint16WrByteIs) && (self->uint16RdByteLen == self->uint16RdByteIs)) ) {
                 self->error = ICTF; // transfer not complete
             }
+            self->fsm = IICMB_IDLE; // transfer done
             /* leave */
             return;
         /*
          *  WRITE States
          *    sent slave address
          */
-        case WR_ADR_SET:
+        case IICMB_WR_ADR_SET:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error exit
@@ -381,10 +382,10 @@ void iicmb_fsm(t_iicmb *self)
             self->iicmb->DPR = (uint8_t) (self->uint8Adr | IICMB_I2C_WR);   // assemble write address
             self->iicmb->CMDR = IICMB_CMD_WRITE;    // ICMB command
             /* Update FSM */
-            self->fsm = WR_ADR_CHK; // go one with data transfer
-            return;                 // wait for next IRQ
+            self->fsm = IICMB_WR_ADR_CHK;   // go one with data transfer
+            return; // wait for next IRQ
         /* slave responsible? */
-        case WR_ADR_CHK:
+        case IICMB_WR_ADR_CHK:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error exit
@@ -392,14 +393,14 @@ void iicmb_fsm(t_iicmb *self)
             /* slave address ack? */
             if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                 self->error = NOSLAVE;  // NCK on address byte
-                self->fsm = WT_IDLE;
+                self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return;
             }
-            self->fsm = WR_BYTE;    // go one with data transfer
-            FALL_THROUGH;           // slave respobsible, write first data byte
+            self->fsm = IICMB_WR_BYTE;  // go one with data transfer
+            FALL_THROUGH;   // slave respobsible, write first data byte
         /* data transmission */
-        case WR_BYTE:
+        case IICMB_WR_BYTE:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error exit
@@ -407,20 +408,20 @@ void iicmb_fsm(t_iicmb *self)
             /* last byte succesfull? */
             if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                 /* prepare IDLE on bus */
-                self->fsm = WT_IDLE;
+                self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return;  // leave byte write FSM
             }
             /* last byte sent */
             if ( self->uint16WrByteIs == self->uint16WrByteLen ) {
                 /* last byte sent */
-                self->fsm = WT_IDLE;
+                self->fsm = IICMB_WT_IDLE;
                 /* write-read access? */
                 if ( 0 != self->uint8WrRd ) {
-                    self->fsm = RD_ADR_SET; // go in FSM read path
+                    self->fsm = IICMB_RD_ADR_SET;   // go in FSM read path
                     (void) iicmb_start_bit(self);
                 } else {
-                    self->fsm = WT_IDLE;    // last byte sent, go in idle
+                    self->fsm = IICMB_WT_IDLE;  // last byte sent, go in idle
                     (void) iicmb_stop_bit(self);
                 }
                 return; // leave, trigger with next IRQ
@@ -436,7 +437,7 @@ void iicmb_fsm(t_iicmb *self)
          *    sent slave address
          */
         /* Read: sent slave address */
-        case RD_ADR_SET:
+        case IICMB_RD_ADR_SET:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error exit
@@ -445,10 +446,10 @@ void iicmb_fsm(t_iicmb *self)
             self->iicmb->DPR = (uint8_t) (self->uint8Adr | IICMB_I2C_RD);  // assemble read address
             self->iicmb->CMDR = IICMB_CMD_WRITE;    // IICMB command
             /* update FSM */
-            self->fsm = RD_ADR_CHK; // check slave is responsible
+            self->fsm = IICMB_RD_ADR_CHK;   // check slave is responsible
             return; // leave, trigger with next IRQ
         /* Read: slave responsible? */
-        case RD_ADR_CHK:
+        case IICMB_RD_ADR_CHK:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
                 return; // error exit
@@ -456,12 +457,12 @@ void iicmb_fsm(t_iicmb *self)
             /* Slave Not responsible */
             if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
                 self->error = NOSLAVE;  // NCK on address byte
-                self->fsm = WT_IDLE;
+                self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return;
             }
             /* next state read byte */
-            self->fsm = RD_BYTE;
+            self->fsm = IICMB_RD_BYTE;
             /* Request =1Byte */
             if ( 1 == self->uint16RdByteLen ) { // only one byte requested, read NCK
                 self->iicmb->CMDR = IICMB_CMD_READ_NAK;
@@ -471,14 +472,14 @@ void iicmb_fsm(t_iicmb *self)
             self->iicmb->CMDR = IICMB_CMD_READ_ACK;
             return; // leave ISR, wait for transfer
         /* Read: Byte Request */
-        case RD_BYTE:
+        case IICMB_RD_BYTE:
             /* capture value */
             (self->uint8PtrData)[self->uint16RdByteIs] = self->iicmb->DPR;
             ++(self->uint16RdByteIs);
             /* last byte sent */
             if ( self->uint16RdByteIs == self->uint16RdByteLen ) {
                 /* last byte sent */
-                self->fsm = WT_IDLE;
+                self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return; // leave ISR
             }
@@ -506,7 +507,7 @@ void iicmb_fsm(t_iicmb *self)
  */
 int iicmb_busy(t_iicmb *self)
 {
-    if ( IDLE == self->fsm ) {
+    if ( IICMB_IDLE == self->fsm ) {
         return 0;
     }
     return -1;
@@ -539,7 +540,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
         return 0;
     }
     /* check for active transfer */
-    if ( IDLE != self->fsm ) {
+    if ( IICMB_IDLE != self->fsm ) {
         return 1;
     }
     /* set-up next request */
@@ -549,7 +550,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
     self->uint16WrByteIs = 0;
     self->uint8PtrData = data;
     self->uint8WrRd = 0;    // only read is performed
-    self->fsm= WR_ADR_SET;
+    self->fsm= IICMB_WR_ADR_SET;
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
     /* normal end */
     return 0;
@@ -568,7 +569,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
         return 0;
     }
     /* check for active transfer */
-    if ( IDLE != self->fsm ) {
+    if ( IICMB_IDLE != self->fsm ) {
         return 1;
     }
     /* set-up next request */
@@ -578,7 +579,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
     self->uint16RdByteIs = 0;
     self->uint8PtrData = data;
     self->uint8WrRd = 0;    // only read is performed
-    self->fsm = RD_ADR_SET;
+    self->fsm = IICMB_RD_ADR_SET;
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
     /* normal end */
     return 0;
@@ -597,7 +598,7 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint
         return 0;
     }
     /* check for active transfer */
-    if ( IDLE != self->fsm ) {
+    if ( IICMB_IDLE != self->fsm ) {
         return 1;
     }
     /* except only write-read transfers, otherwise use dedicated function */
@@ -614,7 +615,7 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint
     self->uint16RdByteLen = rdLen;
     self->uint16RdByteIs = 0;
     self->uint8WrRd = 1;    // read after write is performed
-    self->fsm = WR_ADR_SET;
+    self->fsm = IICMB_WR_ADR_SET;
     /* sent start bit, triggers first IRQ */
     (void) iicmb_start_bit(self);
     /* normal end */
