@@ -147,10 +147,10 @@ typedef enum
  *  @author Andreas Kaeberlein
  */
 typedef struct {
-    uint8_t        CSR;    /**<  Control/Status Register   R/W */
-    uint8_t        DPR;    /**<  Data/Parameter Register   R/W */
-    uint8_t        CMDR;   /**<  Command Register          R/W */
-    const uint8_t  FSMR;   /**<  FSM States Register       RO  */
+    volatile uint8_t        CSR;    /**<  Control/Status Register   R/W */
+    volatile uint8_t        DPR;    /**<  Data/Parameter Register   R/W */
+    volatile uint8_t        CMDR;   /**<  Command Register          R/W */
+    volatile const uint8_t  FSMR;   /**<  FSM States Register       RO  */
 
 } __attribute__((packed)) t_iicm_reg;
 
@@ -168,7 +168,7 @@ typedef struct {
  *  @author Andreas Kaeberlein
  */
 typedef struct t_iicmb {
-    volatile t_iicm_reg*    iicmb;              /**<  pointer to IICMB hardware registers */
+    t_iicm_reg*             iicmb;              /**<  pointer to IICMB hardware registers */
     volatile t_iicmb_fsm    fsm;                /**<  Soft I2C state machine @see IICMB_FSM */
     volatile t_iicmb_ero    error;              /**<  Encoutered errors while exec, #t_iicmb_ero */
     uint8_t                 uint8WrRd;          /**<  Flag: Write/Read Interaction, allows to use first Write, then read part of FSM */

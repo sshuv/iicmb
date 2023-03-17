@@ -302,7 +302,7 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
     /* Function call message */
     iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* Init driver handle */
-    self->iicmb = (volatile t_iicm_reg*) iicmbAdr;  // register set of IICMB
+    self->iicmb = (t_iicm_reg*) iicmbAdr;   // register set of IICMB
     self->fsm = IICMB_IDLE;     // Soft I2C state machine
     self->uint8WrRd = 0;        // no write/read interaction requested
     self->error = NO;           // Driver runs without error
