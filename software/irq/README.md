@@ -104,3 +104,53 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint
 
 ### Example
 
+The code snippet below shows the integration of the driver into a user application.
+
+```c
+#include <stdlib.h> // EXIT codes, malloc
+#include <stdio.h>  // f.e. printf
+#include <stdint.h> // defines fixed data types: int8_t...
+#include "iicmb.h"  // IICMB driver
+
+t_iicmb g_iicmb;  // handle for IICMB driver
+
+/**
+ *  isr
+ *    ISR IICMB Macro
+ */
+void processors_isr(void)
+{
+  iicmb_fsm(&g_iicmb);
+}
+
+/**
+ *  main
+ */
+int main ()
+{
+  /* variables */
+  uint8_t i2c[10];  // I2C packet to interact
+
+  /* init IICMB
+   *   base address 0xF000
+   *   traffic on I2C channel 0
+   */
+  iicmb_init(&g_iicmb, (void*) 0xF000, 0);
+
+  /* issue transfer
+   *   write to I2C slave address 0x12
+   *   write 5 bytes to slave
+   *   read 8 bytes from slave
+   */
+  iicmb_wr_rd(&g_iicmb, 0x12, &i2c, 5, 8);
+
+  /* wait for transfer */
+  while ( iicmb_busy(&g_iicmb) ) {
+    __asm("nop");
+  }
+
+  /* normal end */
+  exit(0);
+}
+```
+
