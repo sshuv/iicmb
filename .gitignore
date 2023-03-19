@@ -7,4 +7,7 @@
 *.elf
 *.asm
 *.c.o
+software/**/test/*
+!software/**/test/*.c
+!software/**/test/*.h
 #
