@@ -45,6 +45,8 @@ on:
     paths-ignore:
       - 'doc/**'
       - '**/README.md'
+      - 'src/**'
+      - 'src_tb/**'
 
 jobs:
   c:
