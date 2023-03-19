@@ -60,7 +60,7 @@ jobs:
         run: cat /etc/os-release
       - name: IRQ Driver
         run: |
-          set -eo pipefail
+          set -e    # exit on first non zero return
           cd ./software/irq
           make ci && make clean
           make && ./test/iicmb_test
