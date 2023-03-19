@@ -62,5 +62,4 @@ jobs:
         run: |
           set -e    # exit on first non zero return
           cd ./software/irq
-          make ci && make clean
-          make && ./test/iicmb_test
+          make ci && make clean && make && ./test/iicmb_test
