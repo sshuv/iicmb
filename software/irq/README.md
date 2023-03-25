@@ -132,10 +132,10 @@ int main ()
   uint8_t i2c[10];  // I2C packet to interact
 
   /* init IICMB
-   *   base address 0xF000
+   *   base address 'NULL', change to physical address of IICMB
    *   traffic on I2C channel 0
    */
-  iicmb_init(&g_iicmb, (void*) 0xF000, 0);
+  iicmb_init(&g_iicmb, (void*) NULL, 0);
 
   /* issue transfer
    *   write to I2C slave address 0x12
@@ -153,4 +153,16 @@ int main ()
   exit(0);
 }
 ```
+
+For exemplary compile:
+```bash
+gcc -c -O iicmb.c -o iicmb.o
+gcc -c -O main.c -o main.o
+gcc iicmb.o main.o -lm -o main
+```
+
+
+## [Test](./software/irq/test/iicmb_test.c)
+
+Githubs [CI/CD](./.github/workflows/c.yml) executes the [Makefile](./software/irq/Makefile) and performs some simple tests.
 
