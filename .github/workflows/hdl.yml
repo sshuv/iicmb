@@ -45,6 +45,7 @@ on:
     paths-ignore:
       - 'doc/**'
       - 'README.md'
+      - 'software/**'
 
 jobs:
   test:
@@ -82,4 +83,3 @@ jobs:
           ghdl -a ${GHDL_OPTS} --workdir=./sim/work -P./sim/iicmb ./src_tb/iicmb_m_tb.vhd
           # Run
           ghdl -r ${GHDL_OPTS} --workdir=./sim/work -P./sim/iicmb --syn-binding iicmb_m_tb --stop-time=1ms
-          
