@@ -249,19 +249,19 @@ static int iicmb_status_decode(t_iicmb *self, uint8_t cmdReg)
         /* exception: arbitration lost */
         case IICMB_RSP_ARB_LOST:
             iicmb_printf("  ERROR:CMDR: arbitration lost\n");
-            self->error = ARBLOST;  // arbitration lost
+            self->error = IICMB_E_ARBLOST;  // arbitration lost
             self->fsm = IICMB_WT_IDLE;
             return -1;
         /* exception: IICMB unknown error */
         case IICMB_RSP_ERR:
             iicmb_printf("  ERROR:CMDR: IICMB unkown error\n");
-            self->error = IICMB;    // I2C controller runs into error
+            self->error = IICMB_E_IICMB;    // I2C controller runs into error
             self->fsm = IICMB_IDLE;
             return -1;
         /* all okay */
         default:
             iicmb_printf("  ERROR:CMDR: soft FSM unknown error\n");
-            self->error = UNKNOWN;  // unknown error in IICMB
+            self->error = IICMB_E_UNKNOWN;  // unknown error in IICMB
             return -1;
     }
     /* normal end */
@@ -305,7 +305,7 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
     self->iicmb = (t_iicm_reg*) iicmbAdr;   // register set of IICMB
     self->fsm = IICMB_IDLE;     // Soft I2C state machine
     self->uint8WrRd = 0;        // no write/read interaction requested
-    self->error = NO;           // Driver runs without error
+    self->error = IICMB_E_NO;   // Driver runs without error
     self->uint16WrByteLen = 0;  // Total Number of Bytes to transfer
     self->uint16WrByteIs = 0;   // Number of Bytes processed (Sent/Receive)
     self->uint8PtrData = NULL;  // Read/Write Buffer Pointer
@@ -382,7 +382,7 @@ void iicmb_fsm(t_iicmb *self)
             }
             /* check for complete transfer */
             if ( !((self->uint16WrByteLen == self->uint16WrByteIs) && (self->uint16RdByteLen == self->uint16RdByteIs)) ) {
-                self->error = ICTF; // transfer not complete
+                self->error = IICMB_E_ICTF; // transfer not complete
             }
             self->fsm = IICMB_IDLE; // transfer done
             /* leave */
@@ -410,7 +410,7 @@ void iicmb_fsm(t_iicmb *self)
             }
             /* slave address ack? */
             if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
-                self->error = NOSLAVE;  // NCK on address byte
+                self->error = IICMB_E_NOSLAVE;  // NCK on address byte
                 self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return;
@@ -474,7 +474,7 @@ void iicmb_fsm(t_iicmb *self)
             }
             /* Slave Not responsible */
             if ( IICMB_RSP_NAK == (uint8CmdReg & IICMB_RSP) ) {
-                self->error = NOSLAVE;  // NCK on address byte
+                self->error = IICMB_E_NOSLAVE;  // NCK on address byte
                 self->fsm = IICMB_WT_IDLE;
                 (void) iicmb_stop_bit(self);
                 return;
@@ -511,7 +511,7 @@ void iicmb_fsm(t_iicmb *self)
             return; // leave ISR, trigger with next IRQ
         /* something unexpedted */
         default:
-            self->error = FSM;  // non designed path of FSM used
+            self->error = IICMB_E_FSM;  // non designed path of FSM used
             return;
     }
     return; // leave ISR
@@ -539,7 +539,7 @@ int iicmb_busy(t_iicmb *self)
  */
 int iicmb_is_error(t_iicmb *self)
 {
-    if ( NO == self->error ) {
+    if ( IICMB_E_NO == self->error ) {
         return 0;
     }
     return -1;
@@ -562,7 +562,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
         return 1;
     }
     /* set-up next request */
-    self->error = NO;
+    self->error = IICMB_E_NO;
     self->uint8Adr = (uint8_t) (adr7 << 1); // prepare address for Read/Write bit set
     self->uint16WrByteLen = len;
     self->uint16WrByteIs = 0;
@@ -591,7 +591,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
         return 1;
     }
     /* set-up next request */
-    self->error = NO;
+    self->error = IICMB_E_NO;
     self->uint8Adr = (uint8_t) (adr7 << 1);
     self->uint16RdByteLen = len;
     self->uint16RdByteIs = 0;
@@ -624,7 +624,7 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_
         return 2;
     }
     /* set-up next request */
-    self->error = NO;
+    self->error = IICMB_E_NO;
     self->uint8Adr = (uint8_t) (adr7 << 1); // define address
     /* write/read request */
     self->uint8PtrData = (uint8_t*) data;

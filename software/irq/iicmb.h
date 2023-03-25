@@ -123,13 +123,13 @@ typedef enum
  */
 typedef enum
 {
-    NO,         /**<  No Error */
-    NOSLAVE,    /**<  Slave not responding */
-    ARBLOST,    /**<  Arbitration lost */
-    IICMB,      /**<  I2C controller encoutered issue */
-    ICTF,       /**<  Transfer incomplete */
-    FSM,        /**<  non designed path of FSM used */
-    UNKNOWN     /**<  Something went wrong */
+    IICMB_E_NO,         /**<  No Error */
+    IICMB_E_NOSLAVE,    /**<  Slave not responding */
+    IICMB_E_ARBLOST,    /**<  Arbitration lost */
+    IICMB_E_IICMB,      /**<  I2C controller encoutered issue */
+    IICMB_E_ICTF,       /**<  Transfer incomplete */
+    IICMB_E_FSM,        /**<  non designed path of FSM used */
+    IICMB_E_UNKNOWN     /**<  Something went wrong */
 } t_iicmb_ero;
 
 
