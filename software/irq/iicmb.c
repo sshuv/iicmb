@@ -1,19 +1,39 @@
-/***********************************************************************
- @copyright     : Siemens AG
- @license       : BSDv3
- @author        : Andreas Kaeberlein
- @address       : Clemens-Winkler-Strasse 3, 09116 Chemnitz
-
- @maintainer    : Andreas Kaeberlein
- @telephone     : +49 371 4810-2108
- @email         : andreas.kaeberlein@siemens.com
-
- @file          : iicmb.c
- @date          : June 6, 2022
-
- @brief         : iicm driver
-                  abstraction layer for IICM
-***********************************************************************/
+/*******************************************************************************
+**                                                                             *
+**    Project: IIC Multiple Bus Controller (IICMB)                             *
+**                                                                             *
+**    File:    IRQ driven C driver.                                            *
+**    Version:                                                                 *
+**             1.0,     March 25, 2023                                         *
+**                                                                             *
+**    Author:  Andreas Kaeberlein, (andreas.kaeberlein@siemens.com)            *
+**                                                                             *
+********************************************************************************
+********************************************************************************
+** Copyright (c) 2016, Sergey Shuvalkin                                        *
+** All rights reserved.                                                        *
+**                                                                             *
+** Redistribution and use in source and binary forms, with or without          *
+** modification, are permitted provided that the following conditions are met: *
+**                                                                             *
+** 1. Redistributions of source code must retain the above copyright notice,   *
+**    this list of conditions and the following disclaimer.                    *
+** 2. Redistributions in binary form must reproduce the above copyright        *
+**    notice, this list of conditions and the following disclaimer in the      *
+**    documentation and/or other materials provided with the distribution.     *
+**                                                                             *
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" *
+** AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE   *
+** IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE  *
+** ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE    *
+** LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR         *
+** CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF        *
+** SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS    *
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN     *
+** CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)     *
+** ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  *
+** POSSIBILITY OF SUCH DAMAGE.                                                 *
+*******************************************************************************/
 
 
 
