@@ -320,6 +320,24 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus)
 
 
 /**
+ *  iicmb_close
+ *    make driver invalid
+ */
+int iicmb_close(t_iicmb *self)
+{
+    /* Function call message */
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    /* Disable IRQ */
+    iicmb_irq_disable(self);    // mask all IRQs
+    iicmb_disable(self);        // core disable
+    /* make handle invalid */
+    self->iicmb = NULL; // invalid register handle
+    /* end */
+    return 0;
+}
+
+
+/**
  *  iicmb_busy_wait
  *    wait for completion of last command with busy wait
  */

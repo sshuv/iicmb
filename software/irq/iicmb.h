@@ -216,6 +216,21 @@ int iicmb_init(t_iicmb *self, void* iicmbAdr, uint8_t bus);
 
 
 
+/**
+ *  @brief close
+ *
+ *  make SW handle to IICMB core invalid
+ *
+ *  @param[in,out]  self                driver handle
+ *  @return         int                 state
+ *  @retval         0                   OK
+ *  @since          2023-03-25
+ *  @author         Andreas Kaeberlein
+ */
+int iicmb_close(t_iicmb *self);
+
+
+
 /** @brief busy wait
  *
  *  busy wait for completion of last command
