@@ -69,7 +69,7 @@ Writes data packet to I2C slave.
  * _len_: number of bytes in _*data_
 
 ```c
-int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
+int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 ```
 
 
@@ -82,7 +82,7 @@ Reads data packet from I2C slave.
  * _len_: number of bytes in _*data_
 
 ```c
-int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
+int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 ```
 
 
@@ -98,7 +98,7 @@ overwritten by read data.
  * _rdLen_: number of read bytes to capture in _*data_
 
 ```c
-int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint16_t rdLen);
+int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_t rdLen);
 ```
 
 
