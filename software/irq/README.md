@@ -32,7 +32,7 @@ int iicmb_busy_wait(t_iicmb *self);
 
 ### ISR
 
-_IICMB_ fsm. This function needs to start in the processors ISR.
+_IICMB_ fsm. This function needs to be called by the processors Interrupt handler.
  * _*self_ : common storage handle
 
 ```c
