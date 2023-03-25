@@ -533,7 +533,7 @@ int iicmb_is_error(t_iicmb *self)
  *  iicm_write
  *    I2C write
  */
-int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
+int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
@@ -548,7 +548,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
     self->uint8Adr = (uint8_t) (adr7 << 1); // prepare address for Read/Write bit set
     self->uint16WrByteLen = len;
     self->uint16WrByteIs = 0;
-    self->uint8PtrData = data;
+    self->uint8PtrData = (uint8_t*) data;
     self->uint8WrRd = 0;    // only read is performed
     self->fsm= IICMB_WR_ADR_SET;
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
@@ -562,7 +562,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
  *  iicm_read
  *    I2C read
  */
-int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
+int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
@@ -577,7 +577,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
     self->uint8Adr = (uint8_t) (adr7 << 1);
     self->uint16RdByteLen = len;
     self->uint16RdByteIs = 0;
-    self->uint8PtrData = data;
+    self->uint8PtrData = (uint8_t*) data;
     self->uint8WrRd = 0;    // only read is performed
     self->fsm = IICMB_RD_ADR_SET;
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
@@ -591,7 +591,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len)
  *  iicmb_wr_rd
  *    perform I2C write, repeated start condition and I2C read
  */
-int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint16_t rdLen)
+int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_t rdLen)
 {
     /* check for empty data set */
     if ( (0 == wrLen) && (0 == rdLen) ) {
@@ -609,7 +609,7 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint
     self->error = NO;
     self->uint8Adr = (uint8_t) (adr7 << 1); // define address
     /* write/read request */
-    self->uint8PtrData = data;
+    self->uint8PtrData = (uint8_t*) data;
     self->uint16WrByteLen = wrLen;
     self->uint16WrByteIs = 0;
     self->uint16RdByteLen = rdLen;

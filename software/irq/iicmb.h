@@ -280,14 +280,14 @@ int iicmb_is_error(t_iicmb *self);
  *  @param[in,out]  self                storage element
  *  @param[in]      adr7                Slave address (7bit)
  *  @param[in]      *data               data buffer
- *  @param[in]      len                 data buffer length
+ *  @param[in]      len                 size of *data in byte
  *  @return         int                 state
  *  @retval         0                   OK: Transfer request accepted
  *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
+int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 
 
 
@@ -298,14 +298,14 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
  *  @param[in,out]  self                storage element
  *  @param[in]      adr7                Slave address (7bit)
  *  @param[out]     *data               data buffer
- *  @param[in]      len                 data buffer length
+ *  @param[in]      len                 size of *data in byte
  *  @return         int                 state
  *  @retval         0                   OK: Transfer request accepted
  *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
+int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 
 
 
@@ -315,9 +315,9 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
  *
  *  @param[in,out]  this                storage element
  *  @param[in]      adr7                Slave address (7bit)
- *  @param[out]     *data               data buffer, write and read takes place in the same buffer, in consequence is the write data by the read data overwritten
- *  @param[in]      wrLen               number of written bytes
- *  @param[in]      rdLen               number of read requested bytes
+ *  @param[in,out]  *data               data buffer, write and read takes place in the same buffer, in consequence is the write data by the read data overwritten
+ *  @param[in]      wrLen               number of bytes to write in *data
+ *  @param[in]      rdLen               number of bytes to read in *data
  *  @return         int                 state
  *  @retval         0                   OK: Transfer request accepted
  *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
@@ -325,7 +325,7 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t len);
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
-int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, uint8_t *data, uint16_t wrLen, uint16_t rdLen);
+int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_t rdLen);
 
 
 
