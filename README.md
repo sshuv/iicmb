@@ -19,4 +19,4 @@ The key feature of the core is its ability to control several connected I<sup>2<
 - Example connection as 8-bit slave on Wishbone bus
 - Example connection as 32-bit slave on Avalon-MM bus
 - Sequencer-based example, working without any system bus
-- Low-level [poll](./software/poll/iicmb.h) and [irq](./software/irq/README.md) based C driver
+- Low-level [poll](/software/poll/iicmb.h) and [irq](/software/irq/README.md) based C driver

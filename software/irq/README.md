@@ -1,4 +1,4 @@
-# [IICMB](./software/irq/iicmb.c) IRQ driver
+# [IICMB](/software/irq/iicmb.c) IRQ driver
 
 Interrupt driven dataflow for IICMB.
 
@@ -64,7 +64,7 @@ int iicmb_is_error(t_iicmb *self);
 
 Writes data packet to I2C slave.
  * _*self_ : common storage handle
- * _adr7_: 7bit I2C address of slave
+ * _adr7_: 7bit slave address
  * _*data_: pointer to write data
  * _len_: number of bytes in _*data_
 
@@ -77,7 +77,7 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 
 Reads data packet from I2C slave.
  * _*self_ : common storage handle
- * _adr7_: 7bit I2C address of slave
+ * _adr7_: 7bit slave address
  * _*data_: pointer to read data
  * _len_: number of bytes in _*data_
 
@@ -88,11 +88,11 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
 
 ### Write-Read
 
-Writes an data packet to I2C slave, sends repeated start condition and starts with read.
-Read and write data tackes place in the same buffer. That means write buffer will be
-overwritten by read data.
+Writes to I2C slave, sends a repeated start condition and starts with read.
+Read and write data takes place in the same buffer. That means the read data
+will overwrite the write data.
  * _*self_ : common storage handle
- * _adr7_: 7bit I2C address of slave
+ * _adr7_: 7bit slave address
  * _*data_: pointer to read data
  * _wrLen_: number of write bytes in _*data_
  * _rdLen_: number of read bytes to capture in _*data_
@@ -138,7 +138,7 @@ int main ()
   iicmb_init(&g_iicmb, (void*) NULL, 0);
 
   /* issue transfer
-   *   write to I2C slave address 0x12
+   *   access I2C slave with address 0x12
    *   write 5 bytes to slave
    *   read 8 bytes from slave
    */
@@ -162,7 +162,7 @@ gcc iicmb.o main.o -lm -o main
 ```
 
 
-## [Test](./software/irq/test/iicmb_test.c)
+## [Test](/software/irq/test/iicmb_test.c)
 
-Githubs [CI/CD](./.github/workflows/c.yml) executes the [Makefile](./software/irq/Makefile) and performs some simple tests.
+Githubs [CI/CD](/.github/workflows/c.yml) executes the [Makefile](/software/irq/Makefile) and performs some simple tests.
 
