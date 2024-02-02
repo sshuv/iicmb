@@ -98,6 +98,22 @@
 
 
 
+/**
+ * @defgroup I2C_SW_FUNC
+ *
+ * I2C driver function exit codes
+ *
+ * @{
+ */
+#define IICMB_EXIT_OK       (0)     /**<  Function ended normally */
+#define IICMB_EXIT_BUSY     (1)     /**<  IICMB busy with last request, please wait */
+#define IICMB_EXIT_I2C_OCC  (2)     /**<  I2C bus is occupied by another master, please wait */
+#define IICMB_EXIT_ERROR    (-1)    /**<  Something went wrong */
+/** @} */
+
+
+
+
 /** C++ compatibility **/
 #ifdef __cplusplus
 extern "C"
