@@ -98,6 +98,23 @@
 
 
 
+/**
+ * @defgroup I2C_SW_FUNC
+ *
+ * I2C driver function exit codes
+ *
+ * @{
+ */
+#define IICMB_EXIT_OK       (0)     /**<  Function ended normally */
+#define IICMB_EXIT_BUSY     (1<<0)  /**<  IICMB busy with last request, please wait */
+#define IICMB_EXIT_OCC      (1<<1)  /**<  Occupied by another master, please wait */
+
+#define IICMB_EXIT_ERROR    (-1)    /**<  Something went wrong */
+/** @} */
+
+
+
+
 /** C++ compatibility **/
 #ifdef __cplusplus
 extern "C"
@@ -148,6 +165,7 @@ typedef enum
     IICMB_E_IICMB,      /**<  I2C controller encoutered issue */
     IICMB_E_ICTF,       /**<  Transfer incomplete */
     IICMB_E_FSM,        /**<  non designed path of FSM used */
+    IICMB_E_BUSOCC,     /**<  I2C bus occupied by another slave */
     IICMB_E_UNKNOWN     /**<  Something went wrong */
 } t_iicmb_ero;
 
@@ -307,6 +325,22 @@ int iicmb_is_error(t_iicmb *self);
 
 
 
+/** @brief I2C bus state
+ *
+ *  checks I2C bus state
+ *
+ *  @param[in,out]  self                storage element
+ *  @return         int                 state, #I2C_SW_FUNC
+ *  @retval         IICMB_EXIT_OK       I2C Bus is free
+ *  @retval         IICMB_EXIT_BUSY     I2C bus is busy caused by IICMB
+ *  @retval         IICMB_EXIT_OCC      I2C bus is occupied by another master
+ *  @since          2024-02-09
+ *  @author         Andreas Kaeberlein
+ */
+int iicmb_bus_state(t_iicmb *self);
+
+
+
 /** @brief write
  *
  *  write to I2C slave
@@ -316,8 +350,9 @@ int iicmb_is_error(t_iicmb *self);
  *  @param[in]      *data               data buffer
  *  @param[in]      len                 size of *data in byte
  *  @return         int                 state
- *  @retval         0                   OK: Transfer request accepted
- *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         IICMB_EXIT_OK       OK: Transfer request accepted
+ *  @retval         IICMB_EXIT_BUSY     FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         IICMB_EXIT_OCC      FAIL: I2C bus is occupied by another master
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
@@ -334,8 +369,9 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
  *  @param[out]     *data               data buffer
  *  @param[in]      len                 size of *data in byte
  *  @return         int                 state
- *  @retval         0                   OK: Transfer request accepted
- *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         IICMB_EXIT_OK       OK: Transfer request accepted
+ *  @retval         IICMB_EXIT_BUSY     FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         IICMB_EXIT_OCC      FAIL: I2C bus is occupied by another master
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */
@@ -353,9 +389,10 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len);
  *  @param[in]      wrLen               number of bytes to write in *data
  *  @param[in]      rdLen               number of bytes to read in *data
  *  @return         int                 state
- *  @retval         0                   OK: Transfer request accepted
- *  @retval         1                   FAIL: Transfer request not accepted, wait for finish before next request
- *  @retval         2                   FAIL: Read or Write only requested
+ *  @retval         IICMB_EXIT_OK       OK: Transfer request accepted
+ *  @retval         IICMB_EXIT_BUSY     FAIL: Transfer request not accepted, wait for finish before next request
+ *  @retval         IICMB_EXIT_OCC      FAIL: I2C bus is occupied by another master
+ *  @retval         IICMB_EXIT_ERROR    FAIL: RSomething went wrong
  *  @since          2022-06-14
  *  @author         Andreas Kaeberlein
  */

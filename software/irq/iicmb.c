@@ -47,9 +47,9 @@
 
 
 /**
- *  @defgroup SFCB_PRINTF_EN
+ *  @defgroup IICMB_PRINTF_EN
  *
- *  redirect sfcb_printf to printf
+ *  redirect iicmb_printf to printf
  *
  *  @{
  */
@@ -385,6 +385,15 @@ void iicmb_fsm(t_iicmb *self)
     iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* read command register */
     uint8_t uint8CmdReg = self->iicmb->CMDR;    // clears IRQ, and read data
+    /*  check if we are still own the bus
+     *    @see https://github.com/sshuv/iicmb/issues/8#issuecomment-1922086049
+     */
+    if ( (0 != (self->iicmb->CSR & IICMB_CSR_BB)) && (0 == (self->iicmb->CSR & IICMB_CSR_BC)) ) {   // bus captured by another master
+        self->fsm = IICMB_IDLE;         // sent to idle
+        self->error = IICMB_E_BUSOCC;   // bus by other master occupied
+        (void) iicmb_stop_bit(self);    // release bus
+        return;                         // leave
+    }
     /* read/write/idle */
     switch (self->fsm) {
         /*
@@ -392,7 +401,6 @@ void iicmb_fsm(t_iicmb *self)
          *    nothing to do
          */
         case IICMB_IDLE:
-            iicmb_status_decode(self, uint8CmdReg);
             return; // clears only last IRQ after stopbit
         /* stop bit succesfull sent? */
         case IICMB_WT_IDLE:
@@ -545,6 +553,7 @@ void iicmb_fsm(t_iicmb *self)
  */
 int iicmb_busy(t_iicmb *self)
 {
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     if ( IICMB_IDLE == self->fsm ) {
         return 0;
     }
@@ -554,15 +563,36 @@ int iicmb_busy(t_iicmb *self)
 
 
 /**
- *  icmb_is_error
+ *  iicmb_is_error
  *    return ero code
  */
 int iicmb_is_error(t_iicmb *self)
 {
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     if ( IICMB_E_NO == self->error ) {
         return 0;
     }
     return -1;
+}
+
+
+
+/**
+ *  iicmb_bus_state
+ *    check I2C bus state
+ *    @see https://github.com/sshuv/iicmb/issues/8#issuecomment-1922086049
+ */
+int iicmb_bus_state(t_iicmb *self)
+{
+    iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
+    if ( 0 != (self->iicmb->CSR & IICMB_CSR_BB) ) { // I2C Bus is busy
+        if ( 0 == (self->iicmb->CSR & IICMB_CSR_BC) ) { // Bus by other Master captured
+            return IICMB_EXIT_OCC;  // bus occupied
+        } else {    // IICMB owns the bus
+            return IICMB_EXIT_BUSY; // IICMB transfer active
+        }
+    }
+    return IICMB_EXIT_OK;   // I2C bus is free
 }
 
 
@@ -575,11 +605,15 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
-        return 0;
+        return IICMB_EXIT_OK;
     }
     /* check for active transfer */
     if ( IICMB_IDLE != self->fsm ) {
-        return 1;
+        return IICMB_EXIT_BUSY; // iicmb is busy with last request
+    }
+    /* check for bus occupation */
+    if ( (0 != (self->iicmb->CSR & IICMB_CSR_BB)) && (0 == (self->iicmb->CSR & IICMB_CSR_BC)) ) {
+        return IICMB_EXIT_OCC;  // i2c by other master occupied
     }
     /* set-up next request */
     self->error = IICMB_E_NO;
@@ -589,9 +623,9 @@ int iicmb_write(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
     self->uint8PtrData = (uint8_t*) data;
     self->uint8WrRd = 0;    // only read is performed
     self->fsm= IICMB_WR_ADR_SET;
+    /* issue request */
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
-    /* normal end */
-    return 0;
+    return IICMB_EXIT_OK;   // normal end
 }
 
 
@@ -604,11 +638,15 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
 {
     /* check for empty data set */
     if ( 0 == len ) {
-        return 0;
+        return IICMB_EXIT_OK;
     }
     /* check for active transfer */
     if ( IICMB_IDLE != self->fsm ) {
-        return 1;
+        return IICMB_EXIT_BUSY; // iicmb is busy with last request
+    }
+    /* check for bus occupation */
+    if ( (0 != (self->iicmb->CSR & IICMB_CSR_BB)) && (0 == (self->iicmb->CSR & IICMB_CSR_BC)) ) {
+        return IICMB_EXIT_OCC;  // i2c by other master occupied
     }
     /* set-up next request */
     self->error = IICMB_E_NO;
@@ -618,9 +656,9 @@ int iicmb_read(t_iicmb *self, uint8_t adr7, void* data, uint16_t len)
     self->uint8PtrData = (uint8_t*) data;
     self->uint8WrRd = 0;    // only read is performed
     self->fsm = IICMB_RD_ADR_SET;
+    /* issue request */
     (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
-    /* normal end */
-    return 0;
+    return IICMB_EXIT_OK;   // normal end
 }
 
 
@@ -633,15 +671,19 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_
 {
     /* check for empty data set */
     if ( (0 == wrLen) && (0 == rdLen) ) {
-        return 0;
+        return IICMB_EXIT_OK;
     }
     /* check for active transfer */
     if ( IICMB_IDLE != self->fsm ) {
-        return 1;
+        return IICMB_EXIT_BUSY; // iicmb is busy with last request
+    }
+    /* check for bus occupation */
+    if ( (0 != (self->iicmb->CSR & IICMB_CSR_BB)) && (0 == (self->iicmb->CSR & IICMB_CSR_BC)) ) {
+        return IICMB_EXIT_OCC;  // i2c by other master occupied
     }
     /* except only write-read transfers, otherwise use dedicated function */
     if ( !((0 != wrLen) && (0 != rdLen)) ) {
-        return 2;
+        return IICMB_EXIT_ERROR;
     }
     /* set-up next request */
     self->error = IICMB_E_NO;
@@ -654,8 +696,7 @@ int iicmb_wr_rd(t_iicmb *self, uint8_t adr7, void* data, uint16_t wrLen, uint16_
     self->uint16RdByteIs = 0;
     self->uint8WrRd = 1;    // read after write is performed
     self->fsm = IICMB_WR_ADR_SET;
-    /* sent start bit, triggers first IRQ */
-    (void) iicmb_start_bit(self);
-    /* normal end */
-    return 0;
+    /* issue request */
+    (void) iicmb_start_bit(self);   // sent start bit, triggers first IRQ
+    return IICMB_EXIT_OK;   // normal end
 }
