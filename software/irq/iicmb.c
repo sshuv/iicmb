@@ -385,15 +385,6 @@ void iicmb_fsm(t_iicmb *self)
     iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
     /* read command register */
     uint8_t uint8CmdReg = self->iicmb->CMDR;    // clears IRQ, and read data
-    /*  check if we are still own the bus
-     *    @see https://github.com/sshuv/iicmb/issues/8#issuecomment-1922086049
-     */
-    if ( (0 != (self->iicmb->CSR & IICMB_CSR_BB)) && (0 == (self->iicmb->CSR & IICMB_CSR_BC)) ) {   // bus captured by another master
-        self->fsm = IICMB_IDLE;         // sent to idle
-        self->error = IICMB_E_BUSOCC;   // bus by other master occupied
-        (void) iicmb_stop_bit(self);    // release bus
-        return;                         // leave
-    }
     /* read/write/idle */
     switch (self->fsm) {
         /*
@@ -401,8 +392,8 @@ void iicmb_fsm(t_iicmb *self)
          *    nothing to do
          */
         case IICMB_IDLE:
-            return; // clears only last IRQ after stopbit
-        /* stop bit succesfull sent? */
+            return; // clears IRQ if unexpacted entered
+        /* stop bit succesfull sent?, clears last IRQ after stopbit */
         case IICMB_WT_IDLE:
             /* IICMB encoutered error? */
             if ( 0 != iicmb_status_decode(self, uint8CmdReg) ) {
@@ -581,15 +572,16 @@ int iicmb_is_error(t_iicmb *self)
  *  iicmb_bus_state
  *    check I2C bus state
  *    @see https://github.com/sshuv/iicmb/issues/8#issuecomment-1922086049
+ *    @see https://github.com/sshuv/iicmb/issues/10
  */
 int iicmb_bus_state(t_iicmb *self)
 {
     iicmb_printf("__FUNCTION__ = %s\n", __FUNCTION__);
-    if ( 0 != (self->iicmb->CSR & IICMB_CSR_BB) ) { // I2C Bus is busy
-        if ( 0 == (self->iicmb->CSR & IICMB_CSR_BC) ) { // Bus by other Master captured
+    if ( IICMB_IDLE != self->fsm ) {    // through IICMB makro skew between 'capture' and 'busy_y' evaluation of iicmb.c driver internal state
+        return IICMB_EXIT_BUSY; // IICMB transfer active
+    } else {
+        if ( 0 != (self->iicmb->CSR & IICMB_CSR_BB) ) { // I2C Bus is busy
             return IICMB_EXIT_OCC;  // bus occupied
-        } else {    // IICMB owns the bus
-            return IICMB_EXIT_BUSY; // IICMB transfer active
         }
     }
     return IICMB_EXIT_OK;   // I2C bus is free
